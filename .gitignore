@@ -1,0 +1,4 @@
+includes/config.php
+.env
+*.log
+Thumbs.db
