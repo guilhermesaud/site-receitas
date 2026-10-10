@@ -240,5 +240,5 @@ require 'includes/header.php';
     </section>
   </div>
 </div>
-<script src="assets/js/configuracoes.js" defer></script>
+<script src="assets/js/configuracoes.js?v=<?= (int)@filemtime(__DIR__ . '/assets/js/configuracoes.js') ?>" defer></script>
 <?php require 'includes/footer.php'; ?>

@@ -1,6 +1,6 @@
 </main>
 <footer><div class="container">Meu caderno de receitas</div></footer>
-<script src="assets/js/app.js" defer></script>
+<script src="assets/js/app.js?v=<?= (int)@filemtime(__DIR__ . '/../assets/js/app.js') ?>" defer></script>
 <?php
 // Notificações pendentes (flash na sessão): mostradas uma única vez e removidas da sessão
 $avisos = is_array($_SESSION['flash'] ?? null) ? $_SESSION['flash'] : [];

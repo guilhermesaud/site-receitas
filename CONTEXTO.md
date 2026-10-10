@@ -223,6 +223,7 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 - **Escala base de 14px** (`html{font-size:87.5%}`) para o site parecer menos "grande".
 - **"Custo" no singular** em toda a interface; a tabela interna segue `custos`.
 - **Senha atual removida do perfil** a pedido do dono (troca de login/senha sem confirmar a senha antiga; é um *trade-off* de segurança consciente).
+- **Anti-cache:** o CSS e os JS são carregados com `?v=` + data de modificação do arquivo (`filemtime`), para o navegador sempre baixar a versão nova depois de cada cópia por cima. Evita botões "mortos" por JS antigo em cache.
 - **Datas da receita:** `criado_em` é automático; `atualizado_em` é gravado explicitamente com `NOW()` no `UPDATE` de `processar_receita()` (o `ON UPDATE CURRENT_TIMESTAMP` do MySQL não marcaria edições só de passos, utensílios ou imagens, pois a linha de `receitas` não mudaria). Datas formatadas no SQL com `DATE_FORMAT(..., '%d/%m/%Y %H:%i')`, sem helper novo no `config.php`.
 - **Formulário de receita: Ingredientes e Utensílios lado a lado**, em blocos de mesma largura e altura fixa (`.bloco-form`, 20rem), com rolagem interna na caixa de texto e na grade de utensílios (cabeçalho fixo: Quantidade, Utensílio e lixeira; botão "+" no topo do bloco). A linha nova nasce com quantidade 1 e "Selecione". Abaixo de 700px os blocos empilham. Texto e linhas são compactos (fonte `.85rem`, linhas de utensílio baixas) para caber mais itens à vista.
 
@@ -271,6 +272,7 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 - O dono escreve em português, em pedidos numerados e costuma anexar **prints** com setas/caixas vermelhas para indicar alinhamentos.
 - Cada entrega vem como os arquivos alterados, completos (o dono copia por cima dos locais); quando há mudança de banco, avisar **antes** de copiar os arquivos qual `.sql` rodar (e que rode só uma vez). Se a mudança tocar um helper, lembrar de atualizar também o `includes/config.exemplo.php`.
 - Antes de mexer num arquivo, ler a versão atual no repositório (ele foi alterado por vários ajustes em sequência) e reaproveitar os helpers existentes em vez de duplicar código.
+- O assistente não executa PHP, mas consegue testar HTML/CSS/JS num Chromium headless (montando a página a partir dos `.php`); isso já foi usado para validar o botão "+" e a lixeira dos utensílios.
 - Quando uma entrega renomear um `id` ou classe usado por PHP, CSS **e** JS, entregar todos esses arquivos juntos e listar cada um na instrução de cópia (um JS não copiado deixa botões sem efeito).
 - Explicar de forma curta o que mudou, o que ficou fora do pedido e o que precisa ser testado.
 

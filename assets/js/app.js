@@ -88,6 +88,7 @@ window.mostrarNotificacao = (mensagem, tipo = 'sucesso') => {
     document.getElementById('add-utensilio').addEventListener('click', () => {
       listaUt.append(modeloUt.content.cloneNode(true));
       listaUt.lastElementChild.querySelector('select').focus();
+      listaUt.lastElementChild.scrollIntoView({ block: 'nearest' });   // mostra a linha inteira dentro da rolagem
     });
     listaUt.addEventListener('click', (ev) => ev.target.closest('.rm-ut')?.closest('.utensilio').remove());
   }

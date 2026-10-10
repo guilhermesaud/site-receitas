@@ -93,5 +93,5 @@ $olho = '<button type="button" class="olho" aria-label="Mostrar senha" aria-pres
 
   <button type="submit">Salvar</button>
 </form>
-<script src="assets/js/perfil.js" defer></script>
+<script src="assets/js/perfil.js?v=<?= (int)@filemtime(__DIR__ . '/assets/js/perfil.js') ?>" defer></script>
 <?php require 'includes/footer.php'; ?>

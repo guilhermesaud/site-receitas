@@ -28,7 +28,7 @@ foreach (glob(__DIR__ . '/../assets/fonts/*') ?: [] as $arq) {
   <!-- Aplica o tema salvo ANTES de pintar a página (evita o "flash" de tema claro) -->
   <script>try{var t=localStorage.getItem('tema');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark-mode')}catch(e){}</script>
   <?php if ($fonte): ?><style>@font-face{font-family:"Muro";src:url("<?= $fonte['url'] ?>") format("<?= $fonte['fmt'] ?>");font-weight:400;font-style:normal;font-display:swap}</style><?php endif; ?>
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=<?= (int)@filemtime(__DIR__ . '/../assets/css/style.css') ?>">
 </head>
 <body>
 <header class="topo">
