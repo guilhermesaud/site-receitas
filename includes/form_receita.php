@@ -23,8 +23,8 @@ function area_imagem(string $input, string $rm, ?string $img, bool $removida, st
 /** HTML de uma linha de utensílio: quantidade + utensílio cadastrado (lista e <template> do JavaScript). */
 function utensilio_html(array $u, array $lista): string {
     return '<div class="utensilio">'
-        . '<label>Quantidade<input type="number" name="utensilio_qtd[]" min="1" max="999" value="' . (int)$u['quantidade'] . '"></label>'
-        . '<label>Utensílio<select name="utensilio_id[]"><option value="">Selecione</option>' . opcoes_html($lista, $u['utensilio_id']) . '</select></label>'
+        . '<input type="number" name="utensilio_qtd[]" min="1" max="999" value="' . (int)$u['quantidade'] . '" aria-label="Quantidade">'
+        . '<select name="utensilio_id[]" aria-label="Utensílio"><option value="">Selecione</option>' . opcoes_html($lista, $u['utensilio_id']) . '</select>'
         . '<button type="button" class="rm-ut icon-btn sec exc" title="Remover utensílio" aria-label="Remover utensílio">' . SVG_LIXEIRA . '</button>'
         . '</div>';
 }
@@ -103,18 +103,30 @@ $utens   = ($_SERVER['REQUEST_METHOD'] === 'POST') ? utensilios_do_post() : ($ut
     <input type="url" name="video_url" placeholder="https://www.youtube.com/watch?v=..." value="<?= e($d['video_url']) ?>">
   </label>
 
-  <label>Ingredientes (um por linha)
-    <textarea name="ingredientes" required><?= e($d['ingredientes']) ?></textarea>
-  </label>
+  <!-- Ingredientes (esquerda) e Utensílios (direita): dois blocos lado a lado, de altura fixa, com rolagem interna -->
+  <div class="ingr-utens-form">
+    <section class="bloco-form" aria-labelledby="t-ingredientes">
+      <div class="bloco-topo">
+        <div class="bloco-tit"><h2 id="t-ingredientes">Ingredientes</h2><small>um por linha</small></div>
+      </div>
+      <textarea name="ingredientes" required aria-labelledby="t-ingredientes"><?= e($d['ingredientes']) ?></textarea>
+    </section>
 
-  <!-- Utensílios (opcional): vários por receita, cada linha com quantidade + utensílio cadastrado -->
-  <fieldset>
-    <legend>Utensílios</legend>
-    <div id="utensilios"><?php foreach ($utens as $u) echo utensilio_html($u, $listaUt); ?></div>
-    <template id="tpl-utensilio"><?= utensilio_html(['utensilio_id' => 0, 'quantidade' => 1], $listaUt) ?></template>
-    <?php if (!$listaUt): ?><small>Nenhum utensílio cadastrado. Cadastre em Configurações &gt; Utensílios.</small><?php endif; ?>
-    <button type="button" id="add-utensilio" class="icon-btn sec" title="Adicionar utensílio" aria-label="Adicionar utensílio"><?= SVG_MAIS ?></button>
-  </fieldset>
+    <!-- Utensílios (opcional): vários por receita, cada linha com quantidade + utensílio cadastrado -->
+    <section class="bloco-form" aria-labelledby="t-utensilios">
+      <div class="bloco-topo">
+        <div class="bloco-tit"><h2 id="t-utensilios">Utensílios</h2></div>
+        <button type="button" id="add-utensilio" class="icon-btn sec" title="Adicionar utensílio" aria-label="Adicionar utensílio"><?= SVG_MAIS ?></button>
+      </div>
+      <div class="ut-rolagem">
+        <div class="ut-cab" aria-hidden="true"><span>Quantidade</span><span>Utensílio</span><span></span></div>
+        <div id="utensilios"><?php foreach ($utens as $u) echo utensilio_html($u, $listaUt); ?></div>
+        <p class="ut-vazio">Nenhum utensílio. Clique em + para adicionar.</p>
+      </div>
+      <template id="tpl-utensilio"><?= utensilio_html(['utensilio_id' => 0, 'quantidade' => 1], $listaUt) ?></template>
+      <?php if (!$listaUt): ?><small>Nenhum utensílio cadastrado. Cadastre em Configurações &gt; Utensílios.</small><?php endif; ?>
+    </section>
+  </div>
 
   <fieldset>
     <legend>Modo de preparo</legend>

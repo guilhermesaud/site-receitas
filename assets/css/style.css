@@ -411,10 +411,25 @@ h1,h2,.card h2,.receita h1{overflow-wrap:anywhere;word-break:break-word;max-widt
 }
 
 /* ===== Utensílios: formulário e página da receita ===== */
-#utensilios{display:grid;gap:.8rem}
-.utensilio{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:.8rem;align-items:end}
-.utensilio .icon-btn{width:40px;height:40px}
-#add-utensilio{border-radius:var(--r)}
+/* Formulário: Ingredientes e Utensílios lado a lado (blocos de mesma largura e altura fixa; rolagem dentro de cada um) */
+.ingr-utens-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.1rem}
+.bloco-form{display:flex;flex-direction:column;gap:.7rem;height:20rem;min-width:0;padding:1rem;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)}
+.bloco-form input,.bloco-form select,.bloco-form textarea{background:var(--bg)}
+.bloco-topo{display:flex;align-items:center;justify-content:space-between;gap:.6rem;min-height:36px}
+.bloco-tit{display:flex;align-items:baseline;gap:.6rem;min-width:0}
+.bloco-tit h2{margin:0;font-size:1.2rem}
+.bloco-form textarea{flex:1;min-height:0;resize:none}             /* a barra de rolagem aparece dentro da caixa */
+#add-utensilio{width:36px;height:36px;border-radius:var(--r)}
+.ut-rolagem{flex:1;min-height:0;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r);background:var(--bg)}
+.ut-cab,.utensilio{display:grid;grid-template-columns:6.5rem minmax(0,1fr) 34px;gap:.6rem;align-items:center;padding:.4rem .6rem}
+.ut-cab{position:sticky;top:0;z-index:1;background:var(--soft);color:var(--mut);font-size:.8rem;font-weight:700;border-bottom:1px solid var(--bd)}
+#utensilios{display:grid}
+.utensilio{border-bottom:1px solid var(--bd)}
+.utensilio:last-child{border-bottom:0}
+.utensilio .icon-btn{width:34px;height:34px}
+.ut-vazio{display:none;margin:0;padding:1rem;text-align:center;color:var(--mut);font-size:.9rem}
+#utensilios:empty + .ut-vazio{display:block}
+@media (max-width:700px){.ingr-utens-form{grid-template-columns:minmax(0,1fr)}}
 .ingr-utens{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:2rem;align-items:start}
 .ingr-utens.so-ingr{grid-template-columns:minmax(0,1fr)}
 .ingr-utens section{min-width:0}
