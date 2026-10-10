@@ -140,7 +140,7 @@ function processar_receita(?array $atual): array {
         $campos = [$d['titulo'], (int)$d['categoria_id'], $d['dificuldade'], (int)$d['tempo_preparo'], $d['rendimento'], $d['video_url'] ?: null, $d['ingredientes'],
                    $d['ocasiao_id'] === '' ? null : (int)$d['ocasiao_id'], $d['culinaria_id'] === '' ? null : (int)$d['culinaria_id'], $d['custo_id'] === '' ? null : (int)$d['custo_id']];
         if ($atual) {
-            $pdo->prepare('UPDATE receitas SET titulo=?, categoria_id=?, dificuldade=?, tempo_preparo=?, rendimento=?, video_url=?, ingredientes=?, ocasiao_id=?, culinaria_id=?, custo_id=? WHERE id=?')
+            $pdo->prepare('UPDATE receitas SET titulo=?, categoria_id=?, dificuldade=?, tempo_preparo=?, rendimento=?, video_url=?, ingredientes=?, ocasiao_id=?, culinaria_id=?, custo_id=?, atualizado_em=NOW() WHERE id=?')
                 ->execute([...$campos, $id]);
         } else {
             // 1) INSERT primeiro: o ID gerado dá nome à pasta das imagens

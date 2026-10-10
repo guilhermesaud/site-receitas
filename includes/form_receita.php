@@ -5,6 +5,8 @@ const SVG_X       = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const SVG_LIXEIRA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>';
 const SVG_IMG     = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
 
+const SVG_CALENDARIO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+const SVG_RELOGIO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
 const SVG_MAIS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
 
 /** Área clicável de imagem (capa e passos): placeholder, preview e botão X. O app.js cuida dos cliques. */
@@ -69,6 +71,13 @@ $utens   = ($_SERVER['REQUEST_METHOD'] === 'POST') ? utensilios_do_post() : ($ut
       <input type="text" name="titulo" maxlength="150" required value="<?= e($d['titulo']) ?>">
     </label>
 
+    <?php if ($atual && isset($atual['criado_fmt'])): ?>   <!-- só na edição: datas gravadas pelo sistema (não editáveis) -->
+      <div class="ft-datas">
+        <span title="Data de criação"><?= SVG_CALENDARIO ?><span class="sr">Data de criação: </span><?= e($atual['criado_fmt']) ?></span>
+        <span title="Última atualização"><?= SVG_RELOGIO ?><span class="sr">Última atualização: </span><?= e($atual['atualizado_fmt']) ?></span>
+      </div>
+    <?php endif; ?>
+
     <?= area_imagem('capa', 'capa_rm', $atual['imagem_capa'] ?? null, $capaRm, 'Foto de capa', 'upload-capa ft-capa') ?>
 
     <label class="ft-r2">Categoria
@@ -120,7 +129,7 @@ $utens   = ($_SERVER['REQUEST_METHOD'] === 'POST') ? utensilios_do_post() : ($ut
       </div>
       <div class="ut-rolagem">
         <div class="ut-cab" aria-hidden="true"><span>Quantidade</span><span>Utensílio</span><span></span></div>
-        <div id="utensilios"><?php foreach ($utens as $u) echo utensilio_html($u, $listaUt); ?></div>
+        <div id="lista-utensilios"><?php foreach ($utens as $u) echo utensilio_html($u, $listaUt); ?></div>
         <p class="ut-vazio">Nenhum utensílio. Clique em + para adicionar.</p>
       </div>
       <template id="tpl-utensilio"><?= utensilio_html(['utensilio_id' => 0, 'quantidade' => 1], $listaUt) ?></template>

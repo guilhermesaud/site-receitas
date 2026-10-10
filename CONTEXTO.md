@@ -94,7 +94,8 @@ site-receitas/
 │       ├── atualizar_categorias.sql   tabela categorias + receitas.categoria_id (FK)
 │       ├── atualizar_campos.sql       ocasioes, culinarias, custos + FKs opcionais em receitas
 │       ├── atualizar_passos.sql       passos.titulo (opcional)
-│       └── atualizar_utensilios.sql   utensilios + receita_utensilios
+│       ├── atualizar_utensilios.sql   utensilios + receita_utensilios
+│       └── atualizar_datas.sql        receitas.atualizado_em (data da última atualização)
 │
 └── uploads/                   .htaccess (bloqueia execução de scripts) e .gitkeep; {ID da receita}/ e users/ criadas pelo PHP
 ```
@@ -111,7 +112,7 @@ constantes `DIFICULDADES` e `CORES`.
 ## 4. Banco de dados (`receitas_db`)
 
 Todas as tabelas InnoDB, `utf8mb4`. Ordem de execução em uma instalação nova:
-`database/database.sql` → `database/atualizar/atualizar_banco.sql` → `…/atualizar_perfil.sql` → `…/atualizar_cor.sql` → `…/atualizar_categorias.sql` → `…/atualizar_campos.sql` → `…/atualizar_passos.sql` → `…/atualizar_utensilios.sql`.
+`database/database.sql` → `database/atualizar/atualizar_banco.sql` → `…/atualizar_perfil.sql` → `…/atualizar_cor.sql` → `…/atualizar_categorias.sql` → `…/atualizar_campos.sql` → `…/atualizar_passos.sql` → `…/atualizar_utensilios.sql` → `…/atualizar_datas.sql`.
 Atalho: `database/receitas_db.sql` recria a estrutura final de uma vez, mas traz dados reais (ver seção 0) — use apenas uma cópia só com a estrutura.
 Os scripts `atualizar_*.sql` são "rode UMA vez" (não são idempotentes por causa dos `ALTER`).
 O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `password_hash`, nunca texto puro).
@@ -141,7 +142,8 @@ O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `passwo
 | imagem_capa | VARCHAR(255) NULL | caminho relativo a `uploads/` (ex.: `7/<aleatório>.jpg`) |
 | video_url | VARCHAR(255) NULL | só links do YouTube |
 | ingredientes | TEXT NOT NULL | um por linha |
-| criado_em | TIMESTAMP | |
+| criado_em | TIMESTAMP | preenchido sozinho ao cadastrar (`DEFAULT CURRENT_TIMESTAMP`) |
+| atualizado_em | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP | gravado com `NOW()` a cada salvamento do formulário (em `salvar_receita.php`) |
 
 ### `passos` (modo de preparo)
 | Coluna | Tipo | Observação |
@@ -171,12 +173,12 @@ O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `passwo
 
 **Público**
 - Home com grade de cartões (capa, título, categoria, dificuldade, tempo) e busca por título/ingrediente.
-- Página da receita: título, etiquetas (categoria, ocasião, culinária), capa em proporção fixa (2:1, `object-fit: cover`) ocupando ~80% com as informações rápidas empilhadas (~20%: dificuldade, tempo, rendimento, custo), vídeo do YouTube incorporado, ingredientes com utensílios à direita (a seção some se não houver utensílios) e passos numerados (título opcional + imagem opcional).
+- Página da receita: título, etiquetas (categoria, ocasião, culinária), capa em proporção fixa (2:1, `object-fit: cover`) ocupando ~80% com as informações rápidas empilhadas (~20%: dificuldade, tempo, rendimento, custo), vídeo do YouTube incorporado, ingredientes com utensílios à direita (a seção some se não houver utensílios) e passos numerados (título opcional + imagem opcional). Na linha das tags, à direita, uma etiqueta no mesmo estilo com ícone de relógio mostra a data da última atualização.
 - Tema claro/escuro (ícone lua/sol, `localStorage`, sem "flash" ao carregar), rodapé fixo no fim da tela, responsivo.
 
 **Administrador**
 - Login/logout por sessão; rotas administrativas protegidas por `exige_admin()`.
-- Cadastro/edição de receita: título, capa (área clicável com preview e X para remover), categoria, ocasião, culinária, dificuldade, tempo, rendimento, custo, vídeo, ingredientes, **utensílios** (linhas quantidade + utensílio, dinâmicas) e **passos** dinâmicos (título opcional, foto clicável, texto, lixeira).
+- Cadastro/edição de receita: título, capa (área clicável com preview e X para remover), categoria, ocasião, culinária, dificuldade, tempo, rendimento, custo, vídeo, ingredientes, **utensílios** (linhas quantidade + utensílio, dinâmicas) e **passos** dinâmicos (título opcional, foto clicável, texto, lixeira). Na edição, a linha do título mostra à direita, em fonte pequena e só com ícones, a data de criação (calendário) e a de atualização (relógio); no cadastro esse bloco não aparece.
 - Exclusão de receita com limpeza recursiva de `uploads/{ID}/`.
 - Perfil: foto por AJAX (clicar no avatar; X vermelho remove), login, nova senha (com confirmação e olho mostrar/ocultar).
 - Configurações (`configuracoes.php`): menu lateral com abas trocadas por JS, sem recarregar — **Receitas** (tabela com capa, busca em tempo real, rolagem interna de ~10 linhas, ícones de editar/excluir), **Categorias**, **Ocasiões**, **Culinárias**, **Custo**, **Utensílios** (mesmo CRUD: ID, nome editável, receitas vinculadas, salvar/excluir; exclusão bloqueada se em uso), **Usuários** (somente leitura), **Cor**.
@@ -221,6 +223,7 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 - **Escala base de 14px** (`html{font-size:87.5%}`) para o site parecer menos "grande".
 - **"Custo" no singular** em toda a interface; a tabela interna segue `custos`.
 - **Senha atual removida do perfil** a pedido do dono (troca de login/senha sem confirmar a senha antiga; é um *trade-off* de segurança consciente).
+- **Datas da receita:** `criado_em` é automático; `atualizado_em` é gravado explicitamente com `NOW()` no `UPDATE` de `processar_receita()` (o `ON UPDATE CURRENT_TIMESTAMP` do MySQL não marcaria edições só de passos, utensílios ou imagens, pois a linha de `receitas` não mudaria). Datas formatadas no SQL com `DATE_FORMAT(..., '%d/%m/%Y %H:%i')`, sem helper novo no `config.php`.
 - **Formulário de receita: Ingredientes e Utensílios lado a lado**, em blocos de mesma largura e altura fixa (`.bloco-form`, 20rem), com rolagem interna na caixa de texto e na grade de utensílios (cabeçalho fixo: Quantidade, Utensílio e lixeira; botão "+" no topo do bloco). A linha nova nasce com quantidade 1 e "Selecione". Abaixo de 700px os blocos empilham.
 
 ---

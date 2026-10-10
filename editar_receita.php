@@ -3,7 +3,7 @@
 require_once 'includes/salvar_receita.php';
 exige_admin();
 
-$st = db()->prepare('SELECT * FROM receitas WHERE id = ?');
+$st = db()->prepare('SELECT *, DATE_FORMAT(criado_em, \'%d/%m/%Y %H:%i\') AS criado_fmt, DATE_FORMAT(atualizado_em, \'%d/%m/%Y %H:%i\') AS atualizado_fmt FROM receitas WHERE id = ?');
 $st->execute([(int)($_GET['id'] ?? 0)]);
 $atual = $st->fetch();
 

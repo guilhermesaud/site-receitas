@@ -2,7 +2,7 @@
 /* Visualização completa de uma receita (receita.php?id=N). */
 require_once 'includes/config.php';
 
-$stmt = db()->prepare('SELECT r.*, c.nome AS categoria, o.nome AS ocasiao, u.nome AS culinaria, k.nome AS custo
+$stmt = db()->prepare('SELECT r.*, DATE_FORMAT(r.atualizado_em, \'%d/%m/%Y %H:%i\') AS atualizado_fmt, c.nome AS categoria, o.nome AS ocasiao, u.nome AS culinaria, k.nome AS custo
        FROM receitas r JOIN categorias c ON c.id = r.categoria_id
        LEFT JOIN ocasioes o ON o.id = r.ocasiao_id
        LEFT JOIN culinarias u ON u.id = r.culinaria_id
@@ -52,6 +52,8 @@ require 'includes/header.php';
     <span class="tag"><?= e($r['categoria']) ?></span>
     <?php if ($r['ocasiao']): ?><span class="tag"><?= e($r['ocasiao']) ?></span><?php endif; ?>
     <?php if ($r['culinaria']): ?><span class="tag"><?= e($r['culinaria']) ?></span><?php endif; ?>
+    <!-- Última atualização: mesmo estilo das tags, com ícone de relógio, à direita -->
+    <span class="tag tag-data" title="Última atualização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="sr">Última atualização: </span><?= e($r['atualizado_fmt']) ?></span>
   </div>
 
   <!-- Topo: capa (~80%) + informações rápidas empilhadas (~20%) -->
