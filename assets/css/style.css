@@ -423,12 +423,12 @@ h1,h2,.card h2,.receita h1{overflow-wrap:anywhere;word-break:break-word;max-widt
 .ut-rolagem{flex:1;min-height:0;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r);background:var(--bg)}
 .ut-cab,.utensilio{display:grid;grid-template-columns:6.5rem minmax(0,1fr) 34px;gap:.6rem;align-items:center;padding:.4rem .6rem}
 .ut-cab{position:sticky;top:0;z-index:1;background:var(--soft);color:var(--mut);font-size:.8rem;font-weight:700;border-bottom:1px solid var(--bd)}
-#utensilios{display:grid}
+#lista-utensilios{display:grid}
 .utensilio{border-bottom:1px solid var(--bd)}
 .utensilio:last-child{border-bottom:0}
 .utensilio .icon-btn{width:34px;height:34px}
 .ut-vazio{display:none;margin:0;padding:1rem;text-align:center;color:var(--mut);font-size:.9rem}
-#utensilios:empty + .ut-vazio{display:block}
+#lista-utensilios:empty + .ut-vazio{display:block}
 @media (max-width:700px){.ingr-utens-form{grid-template-columns:minmax(0,1fr)}}
 .ingr-utens{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:2rem;align-items:start}
 .ingr-utens.so-ingr{grid-template-columns:minmax(0,1fr)}

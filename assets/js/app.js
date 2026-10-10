@@ -82,7 +82,7 @@ window.mostrarNotificacao = (mensagem, tipo = 'sucesso') => {
   });
 
   // ---- Utensílios: linhas (quantidade + utensílio) adicionadas/removidas dinamicamente ----
-  const listaUt  = document.getElementById('utensilios');
+  const listaUt  = document.getElementById('lista-utensilios');
   const modeloUt = document.getElementById('tpl-utensilio');
   if (listaUt && modeloUt) {
     document.getElementById('add-utensilio').addEventListener('click', () => {

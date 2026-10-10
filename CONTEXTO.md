@@ -11,6 +11,7 @@ Idioma do projeto: **português do Brasil** (interface, comentários, nomes de v
 
 **Decisões vigentes (não repropor sem o dono pedir):**
 - **Tudo local por enquanto.** O site roda só no WampServer; a publicação foi adiada. O GitHub serve para versionamento e para o assistente ler o código.
+- **Versionamento:** a tag `v1.0` (09/10/2026) marca o ponto de partida; novas etapas ganham tags `v1.1`, `v1.2`…
 - **Estrutura de pastas atual está aprovada:** as páginas `.php` ficam na raiz, incluindo `excluir_receita.php`, `logout.php` e `perfil_foto.php`. A ideia de uma pasta `acoes/` foi **descartada**.
 - Os scripts SQL ficam em `database/` (`database/database.sql`, `database/receitas_db.sql` e `database/atualizar/*.sql`). `includes/`, `assets/` e `uploads/` seguem como antes.
 
@@ -220,6 +221,7 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 - **Escala base de 14px** (`html{font-size:87.5%}`) para o site parecer menos "grande".
 - **"Custo" no singular** em toda a interface; a tabela interna segue `custos`.
 - **Senha atual removida do perfil** a pedido do dono (troca de login/senha sem confirmar a senha antiga; é um *trade-off* de segurança consciente).
+- **Formulário de receita: Ingredientes e Utensílios lado a lado**, em blocos de mesma largura e altura fixa (`.bloco-form`, 20rem), com rolagem interna na caixa de texto e na grade de utensílios (cabeçalho fixo: Quantidade, Utensílio e lixeira; botão "+" no topo do bloco). A linha nova nasce com quantidade 1 e "Selecione". Abaixo de 700px os blocos empilham.
 
 ---
 
@@ -247,6 +249,7 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 - Botão "+" de categorias com ícone invisível ao passar o mouse → passou a usar o estilo com contorno (`.sec`).
 - Mensagem de sucesso duplicada/estática no perfil e nas configurações → substituída por toasts.
 - Texto "Nome da Custo" e "Custos" → ajustado para "Custo".
+- Em **Configurações**, a aba Utensílios aparecia embaixo de todas as outras abas → o CSS `#utensilios{display:grid}` (lista do formulário de receita) também atingia a `<section id="utensilios">` da aba e anulava o atributo `hidden`. Corrigido renomeando a lista do formulário para `#lista-utensilios` (CSS, `form_receita.php` e `app.js`). **Regra:** não aplicar `display` por id em elementos cujo id coincide com a chave de uma aba (`receitas`, `categorias`, `ocasioes`, `culinarias`, `custo`, `utensilios`, `usuarios`, `cor`).
 
 **Conhecidos / atenção**
 - **Nada foi executado pelo assistente** que gerou o código (sem PHP no ambiente de geração); só houve conferências estáticas. Teste manual é indispensável após cada mudança.
