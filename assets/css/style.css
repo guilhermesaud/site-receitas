@@ -397,8 +397,8 @@ h1,h2,.card h2,.receita h1{overflow-wrap:anywhere;word-break:break-word;max-widt
 /* ===== Passo: título começa onde começa o texto; "Passo N" maior ===== */
 .passo{grid-template-columns:140px minmax(0,1fr) auto;column-gap:.8rem;row-gap:.6rem;align-items:start}
 .passo-h,.passo-corpo{display:contents}                       /* os filhos entram direto na grade do .passo */
-.passo .n{grid-column:1;grid-row:1;align-self:center;font-size:1.15rem}
-.passo-h input[type=text]{grid-column:2;grid-row:1;align-self:center}
+.passo .n{grid-column:1;grid-row:1;align-self:baseline;font-size:1.15rem}      /* "Passo N" e o título do passo ficam na mesma linha de base do texto */
+.passo-h input[type=text]{grid-column:2;grid-row:1;align-self:baseline}
 .passo-h .rm{grid-column:3;grid-row:1;align-self:center}
 .passo .upload-passo{grid-column:1;grid-row:2}
 .passo-corpo textarea{grid-column:2 / span 2;grid-row:2;align-self:stretch}
