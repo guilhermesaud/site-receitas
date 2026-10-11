@@ -90,13 +90,14 @@ site-receitas/
 │   └── atualizar/
 │       ├── atualizar_banco.sql        usuarios, imagem_capa, tabela passos; migra o texto antigo do preparo
 │       ├── atualizar_perfil.sql       usuarios.foto
-│       ├── atualizar_cor.sql          usuarios.cor_destaque
+│       ├── atualizar_cor.sql          usuarios.cor_destaque (coluna que deixou de ser usada)
 │       ├── atualizar_categorias.sql   tabela categorias + receitas.categoria_id (FK)
 │       ├── atualizar_campos.sql       ocasioes, culinarias, custos + FKs opcionais em receitas
 │       ├── atualizar_passos.sql       passos.titulo (opcional)
 │       ├── atualizar_utensilios.sql   utensilios + receita_utensilios
 │       ├── atualizar_datas.sql        receitas.atualizado_em (data da última atualização)
-│       └── atualizar_layout.sql       tabela ajustes (layout dos ingredientes)
+│       ├── atualizar_layout.sql       tabela ajustes (layout dos ingredientes)
+│       └── atualizar_cor_global.sql   copia a cor do admin para ajustes (cor vale para todo o site)
 │
 └── uploads/                   .htaccess (bloqueia execução de scripts) e .gitkeep; {ID da receita}/ e users/ criadas pelo PHP
 ```
@@ -113,7 +114,7 @@ constantes `DIFICULDADES` e `CORES`.
 ## 4. Banco de dados (`receitas_db`)
 
 Todas as tabelas InnoDB, `utf8mb4`. Ordem de execução em uma instalação nova:
-`database/database.sql` → `database/atualizar/atualizar_banco.sql` → `…/atualizar_perfil.sql` → `…/atualizar_cor.sql` → `…/atualizar_categorias.sql` → `…/atualizar_campos.sql` → `…/atualizar_passos.sql` → `…/atualizar_utensilios.sql` → `…/atualizar_datas.sql` → `…/atualizar_layout.sql`.
+`database/database.sql` → `database/atualizar/atualizar_banco.sql` → `…/atualizar_perfil.sql` → `…/atualizar_cor.sql` → `…/atualizar_categorias.sql` → `…/atualizar_campos.sql` → `…/atualizar_passos.sql` → `…/atualizar_utensilios.sql` → `…/atualizar_datas.sql` → `…/atualizar_layout.sql` → `…/atualizar_cor_global.sql`.
 Atalho: `database/receitas_db.sql` recria a estrutura final de uma vez, mas traz dados reais (ver seção 0) — use apenas uma cópia só com a estrutura.
 Os scripts `atualizar_*.sql` são "rode UMA vez" (não são idempotentes por causa dos `ALTER`).
 O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `password_hash`, nunca texto puro).
@@ -125,7 +126,7 @@ O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `passwo
 | usuario | VARCHAR(50) UNIQUE NOT NULL | login |
 | senha_hash | VARCHAR(255) NOT NULL | bcrypt |
 | foto | VARCHAR(255) NULL | caminho relativo a `uploads/` (ex.: `users/<aleatório>.jpg`) |
-| cor_destaque | VARCHAR(10) NOT NULL DEFAULT 'neutro' | neutro, vermelho, verde, azul, laranja, rosa, roxo, amarelo, cyan |
+| cor_destaque | VARCHAR(10) NOT NULL DEFAULT 'neutro' | **não é mais usada**: a cor de destaque agora é um ajuste do site (tabela `ajustes`, chave `cor_destaque`) |
 | criado_em | TIMESTAMP | |
 
 ### `receitas`
@@ -162,8 +163,8 @@ O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `passwo
 ### `ajustes` (configurações gerais do site, chave/valor)
 | Coluna | Tipo | Observação |
 |---|---|---|
-| chave | VARCHAR(50) PK | hoje só `layout_ingredientes` |
-| valor | VARCHAR(100) NOT NULL | `subtitulo`, `cartoes` ou `etiqueta` (padrão `etiqueta`) |
+| chave | VARCHAR(50) PK | `layout_ingredientes` e `cor_destaque` |
+| valor | VARCHAR(100) NOT NULL | `layout_ingredientes`: `subtitulo`, `cartoes` ou `etiqueta` (padrão `etiqueta`); `cor_destaque`: uma chave de `CORES` (padrão `neutro`) |
 
 ### `receita_utensilios` (vínculo N:N com quantidade)
 | Coluna | Tipo | Observação |
@@ -188,8 +189,8 @@ O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `passwo
 - Cadastro/edição de receita: título, capa (área clicável com preview e X para remover), categoria, ocasião, culinária, dificuldade, tempo, rendimento, custo, vídeo, ingredientes, **utensílios** (linhas quantidade + utensílio, dinâmicas) e **passos** dinâmicos (título opcional, foto clicável, texto, lixeira). Na edição, a linha do título mostra à direita, em fonte pequena e só com ícones, a data de criação (calendário) e a de atualização (relógio); no cadastro esse bloco não aparece.
 - Exclusão de receita com limpeza recursiva de `uploads/{ID}/`.
 - Perfil: foto por AJAX (clicar no avatar; X vermelho remove), login, nova senha (com confirmação e olho mostrar/ocultar).
-- Configurações (`configuracoes.php`): menu lateral com abas trocadas por JS, sem recarregar — **Receitas** (tabela com capa, busca em tempo real, rolagem interna de ~10 linhas, ícones de editar/excluir), **Categorias**, **Ocasiões**, **Culinárias**, **Custo**, **Utensílios** (mesmo CRUD: ID, nome editável, receitas vinculadas, salvar/excluir; exclusão bloqueada se em uso), **Usuários** (somente leitura) e **Layout**, que reúne a aparência do site em níveis: **Cores** (cor de destaque, só para o admin logado) e **Página da receita > Ingredientes** (estilo dos ingredientes: subtítulo com linha, cartões em colunas ou etiqueta; vale para todos os visitantes). A antiga aba Cor foi incorporada ao Layout.
-- Cor de destaque (9 opções, em Configurações > Layout > Cores) aplicada só para o admin logado; visitantes sempre veem o neutro.
+- Configurações (`configuracoes.php`): menu lateral com abas trocadas por JS, sem recarregar — **Receitas** (tabela com capa, busca em tempo real, rolagem interna de ~10 linhas, ícones de editar/excluir), **Categorias**, **Ocasiões**, **Culinárias**, **Custo**, **Utensílios** (mesmo CRUD: ID, nome editável, receitas vinculadas, salvar/excluir; exclusão bloqueada se em uso), **Usuários** (somente leitura) e **Layout**, que reúne a aparência do site em níveis: **Cores** (cor de destaque do site, para todos) e **Página da receita > Ingredientes** (estilo dos ingredientes: subtítulo com linha, cartões em colunas ou etiqueta; vale para todos os visitantes). A antiga aba Cor foi incorporada ao Layout.
+- Cor de destaque (9 opções, em Configurações > Layout > Cores) vale para **todo o site**, visitantes e administrador.
 - Notificações flutuantes (toast) para todos os avisos de sucesso/erro das telas de Configurações e Perfil.
 
 ---
@@ -218,7 +219,7 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 - **Chaves estrangeiras:** `RESTRICT` nas listas (não deixa excluir opção em uso); `CASCADE` em passos e vínculos de utensílios.
 - **Ocasião, Culinária, Custo e Utensílios opcionais:** não quebram receitas antigas.
 - **Listas de opções geradas pelo mesmo código** (`$listas` em `configuracoes.php`): garante "mesmo modelo" entre abas; a chave `de` indica a tabela que referencia a opção (padrão `receitas`; utensílios usam `receita_utensilios`).
-- **Cor de destaque no banco** (`usuarios.cor_destaque`), aplicada como classe `acc-*` no `<html>` só com admin logado; paleta base neutra e a cor aparece apenas em detalhes (botões, hover, bordas ativas, ícones).
+- **Cor de destaque é um ajuste do site** (tabela `ajustes`, chave `cor_destaque`), lida pelo `header.php` e aplicada como classe `acc-*` no `<html>` para todos (visitantes e admin); antes era por usuário (`usuarios.cor_destaque`, hoje sem uso); paleta base neutra e a cor aparece apenas em detalhes (botões, hover, bordas ativas, ícones).
 - **Tema:** classe `.dark-mode` no `<html>`; script no `<head>` aplica o tema salvo antes de pintar (evita flash); preferência do sistema como padrão.
 - **Fonte automática:** CSS não lê diretórios, então o `header.php` usa `glob()` em `assets/fonts/` e injeta o `@font-face` com o primeiro arquivo encontrado.
 - **Largura padronizada:** um único `.container` (`max-width: 1040px`); `body{overflow-y:scroll}` evita deslocamento por barra de rolagem; `fieldset{min-width:0}`.
@@ -232,7 +233,7 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 - **Senha atual removida do perfil** a pedido do dono (troca de login/senha sem confirmar a senha antiga; é um *trade-off* de segurança consciente).
 - **Anti-cache:** o CSS e os JS são carregados com `?v=` + data de modificação do arquivo (`filemtime`), para o navegador sempre baixar a versão nova depois de cada cópia por cima. Evita botões "mortos" por JS antigo em cache.
 - **Grupos de ingredientes por convenção no texto:** linha começando com `-` (também aceita `–` e `—`) é título de grupo; `:` no fim é ignorado (`- Recheio:` = `- Recheio`). Sem mudança no banco: continua uma só coluna `ingredientes`. O agrupamento é feito por `ingredientes_agrupados()`, definida em `receita.php`. Receitas antigas que usavam `Recheio:` sem o traço devem ser editadas para `- Recheio`. Opção futura, se a convenção não satisfizer: grupos estruturados (título + lista) como os passos, com tabela própria.
-- **Layout dos ingredientes é um ajuste do site** (vale para visitantes, não só para o admin), guardado na tabela `ajustes` (`layout_ingredientes`). `receita.php` e `configuracoes.php` tratam a ausência da tabela/valor usando `etiqueta`. A lista de layouts válidos está repetida nos dois arquivos (`['subtitulo','cartoes','etiqueta']` e o array `$layouts`); ao criar um novo layout, atualizar os dois e o CSS (`.ing-*`).
+- **Ajustes visuais do site (cor e layout dos ingredientes) valem para todos**; o **tema claro/escuro** é a exceção e continua individual (preferência salva no navegador de cada visitante). O layout dos ingredientes é um ajuste do site, guardado na tabela `ajustes` (`layout_ingredientes`). `receita.php` e `configuracoes.php` tratam a ausência da tabela/valor usando `etiqueta`. A lista de layouts válidos está repetida nos dois arquivos (`['subtitulo','cartoes','etiqueta']` e o array `$layouts`); ao criar um novo layout, atualizar os dois e o CSS (`.ing-*`).
 - **Aba Layout em níveis (estrutura para futuros ajustes):** Layout (pai, `<section id="layout" class="aba">`) > filhos `<section class="cfg-sec">` com título `h3.cfg-t2` (hoje: Cores e Página da receita) > netos `<section class="cfg-sub">` com título `h4.cfg-t3` (hoje: Ingredientes, dentro de Página da receita). Cada ajuste tem seu próprio `<form class="form-cor">` com `acao` e botão Salvar; um novo ajuste é um bloco copiado desses (há comentários no PHP marcando onde entram novos filhos e netos) mais o tratamento do `acao` no POST de `configuracoes.php`. Os títulos internos usam ids com prefixo `lay-` e **nenhuma regra de CSS por id** (ver a regra sobre colisão de ids na seção 9). POSTs de `cor` e `layout` redirecionam para `#layout`.
 - **Tamanho dos títulos na página da receita:** `--h2-rec` (em `.receita`) = `clamp(1.4rem,4vw,1.85rem)` e vale para Ingredientes, Utensílios e Modo de preparo; os títulos dos grupos de ingredientes são sempre **menores** (subtítulo: `max(1.1rem, 75% de --h2-rec)`; cartões: `max(1.05rem, 72%)`; etiqueta: `1rem`). O `h1` da receita continua maior que os `h2`.
 - **Cabeçalho do passo:** o rótulo "Passo N" (maior que o texto) e o campo de título do passo são alinhados pela **linha de base** (`align-self:baseline`), não pelo centro; a lixeira continua centralizada na linha.

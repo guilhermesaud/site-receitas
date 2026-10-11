@@ -5,12 +5,17 @@ $q = trim($_GET['q'] ?? '');
 
 $admin = null;
 if (eh_admin()) {
-    $st = db()->prepare('SELECT usuario, foto, cor_destaque FROM usuarios WHERE id = ?');
+    $st = db()->prepare('SELECT usuario, foto FROM usuarios WHERE id = ?');
     $st->execute([$_SESSION['admin_id']]);
-    $admin = $st->fetch() ?: ['usuario' => 'Administrador', 'foto' => null, 'cor_destaque' => 'neutro'];
+    $admin = $st->fetch() ?: ['usuario' => 'Administrador', 'foto' => null];
 }
-// Cor de destaque: só vale para o administrador logado (visitantes ficam no neutro)
-$acc = ($admin && ($admin['cor_destaque'] ?? 'neutro') !== 'neutro' && isset(CORES[$admin['cor_destaque']])) ? 'acc-' . $admin['cor_destaque'] : '';
+// Cor de destaque: ajuste do site (tabela ajustes), igual para todos os visitantes e para o administrador
+$cor_site = 'neutro';
+try {
+    $v_cor = db()->query("SELECT valor FROM ajustes WHERE chave = 'cor_destaque'")->fetchColumn();
+    if (is_string($v_cor) && isset(CORES[$v_cor])) $cor_site = $v_cor;
+} catch (PDOException $ex) { /* tabela ainda não criada: fica no neutro */ }
+$acc = $cor_site !== 'neutro' ? 'acc-' . $cor_site : '';
 
 // Fonte customizada: usa o PRIMEIRO arquivo de fonte (.woff2/.woff/.ttf/.otf) de assets/fonts/ — o nome do arquivo não importa
 $fonte = null;

@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!isset(CORES[$cor])) {
                 $erro = 'Escolha uma cor válida.';
             } else {
-                $pdo->prepare('UPDATE usuarios SET cor_destaque = ? WHERE id = ?')->execute([$cor, $_SESSION['admin_id']]);
+                $pdo->prepare("INSERT INTO ajustes (chave, valor) VALUES ('cor_destaque', ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)")->execute([$cor]);   // vale para todo o site
                 $ok = 'Cor atualizada.';
             }
         } elseif ($acao === 'layout') {
@@ -103,9 +103,11 @@ foreach ($listas as $k => $cfg) {
 
 $usuarios = $pdo->query('SELECT id, usuario, foto FROM usuarios ORDER BY id')->fetchAll();
 
-$st = $pdo->prepare('SELECT cor_destaque FROM usuarios WHERE id = ?');
-$st->execute([$_SESSION['admin_id']]);
-$corAtual = $st->fetchColumn() ?: 'neutro';
+$corAtual = 'neutro';                                        // cor de destaque do site (tabela ajustes)
+try {
+    $v = $pdo->query("SELECT valor FROM ajustes WHERE chave = 'cor_destaque'")->fetchColumn();
+    if (is_string($v) && isset(CORES[$v])) $corAtual = $v;
+} catch (PDOException $ex) { /* tabela ainda não criada */ }
 
 $layoutAtual = 'etiqueta';                                   // padrão, se a tabela ajustes ainda não existir
 try {
@@ -251,7 +253,7 @@ require 'includes/header.php';
     <section id="layout" class="aba" hidden>
       <div class="crud-header"><h2>Layout</h2></div>
 
-      <!-- Filho: Cores (vale só para o administrador logado) -->
+      <!-- Filho: Cores (vale para todo o site: visitantes e administrador) -->
       <section class="cfg-sec" aria-labelledby="lay-cores">
         <h3 id="lay-cores" class="cfg-t2">Cores</h3>
         <form class="form-cor" method="post">
