@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id    = (int)($_POST['id'] ?? 0);
     $nome  = trim($_POST['nome'] ?? '');
     $ok    = '';
-    $aba   = in_array($acao, ['cor', 'layout'], true) ? $acao : (isset($listas[$lista]) ? $lista : 'receitas');
+    $aba   = in_array($acao, ['cor', 'layout'], true) ? 'layout' : (isset($listas[$lista]) ? $lista : 'receitas');   // cor e layout ficam na mesma aba
     try {
         if ($acao === 'cor') {
             $cor = (string)($_POST['cor_destaque'] ?? '');
@@ -130,7 +130,6 @@ require 'includes/header.php';
     <a href="#receitas" data-aba="receitas">Receitas</a>
     <?php foreach ($listas as $k => $cfg): ?><a href="#<?= e($k) ?>" data-aba="<?= e($k) ?>"><?= e($cfg['titulo']) ?></a><?php endforeach; ?>
     <a href="#usuarios" data-aba="usuarios">Usuários</a>
-    <a href="#cor" data-aba="cor">Cor</a>
     <a href="#layout" data-aba="layout">Layout</a>
   </nav>
 
@@ -246,46 +245,59 @@ require 'includes/header.php';
       </div>
     </section>
 
-    <!-- ===== Cor ===== -->
-    <section id="cor" class="aba" hidden>
-      <div class="crud-header"><h2>Cor</h2></div>
-      <form class="form-cor" method="post">
-        <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
-        <input type="hidden" name="acao" value="cor">
-        <div class="cores-lista">
-          <?php foreach (CORES as $chave => $nome): ?>
-            <label class="cor">
-              <input type="radio" name="cor_destaque" value="<?= e($chave) ?>" <?= $corAtual === $chave ? 'checked' : '' ?>>
-              <span class="amostra <?= e($chave) ?>"></span><?= e($nome) ?>
-            </label>
-          <?php endforeach; ?>
-        </div>
-        <button type="submit">Salvar cor</button>
-      </form>
-    </section>
-
-    <!-- ===== Layout (vale para todos os visitantes) ===== -->
+    <!-- ===== Layout (pai): aparência do site =====
+         Níveis:  Layout (pai)  >  Cores e Página da receita (filhos)  >  Ingredientes (neto).
+         Novo ajuste: copie um bloco .cfg-sec (filho) ou .cfg-sub (neto) e adapte o formulário. -->
     <section id="layout" class="aba" hidden>
       <div class="crud-header"><h2>Layout</h2></div>
-      <form class="form-cor" method="post">
-        <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
-        <input type="hidden" name="acao" value="layout">
-        <fieldset>
-          <legend>Ingredientes na página da receita</legend>
-          <div class="layouts-lista">
-            <?php foreach ($layouts as $chave => [$nome, $desc, $mini]): ?>
-              <label class="layout-op">
-                <input type="radio" name="layout_ingredientes" value="<?= e($chave) ?>" <?= $layoutAtual === $chave ? 'checked' : '' ?>>
-                <span class="layout-prev" aria-hidden="true"><?= $mini ?></span>
-                <strong><?= e($nome) ?></strong>
-                <small><?= e($desc) ?></small>
+
+      <!-- Filho: Cores (vale só para o administrador logado) -->
+      <section class="cfg-sec" aria-labelledby="lay-cores">
+        <h3 id="lay-cores" class="cfg-t2">Cores</h3>
+        <form class="form-cor" method="post">
+          <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+          <input type="hidden" name="acao" value="cor">
+          <div class="cores-lista">
+            <?php foreach (CORES as $chave => $nome): ?>
+              <label class="cor">
+                <input type="radio" name="cor_destaque" value="<?= e($chave) ?>" <?= $corAtual === $chave ? 'checked' : '' ?>>
+                <span class="amostra <?= e($chave) ?>"></span><?= e($nome) ?>
               </label>
             <?php endforeach; ?>
           </div>
-          <small>Vale para quem visita o site. Receitas sem títulos de grupo continuam como lista simples. Para criar um grupo, comece uma linha com "-" na caixa de ingredientes (ex.: "- Recheio").</small>
-        </fieldset>
-        <button type="submit">Salvar layout</button>
-      </form>
+          <button type="submit">Salvar cor</button>
+        </form>
+      </section>
+
+      <!-- Filho: Página da receita (vale para todos os visitantes) -->
+      <section class="cfg-sec" aria-labelledby="lay-receita">
+        <h3 id="lay-receita" class="cfg-t2">Página da receita</h3>
+
+        <!-- Neto: Ingredientes -->
+        <section class="cfg-sub" aria-labelledby="lay-ingredientes">
+          <h4 id="lay-ingredientes" class="cfg-t3">Ingredientes</h4>
+          <form class="form-cor" method="post">
+            <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+            <input type="hidden" name="acao" value="layout">
+            <fieldset>
+              <legend class="sr">Layout dos ingredientes</legend>
+              <div class="layouts-lista">
+                <?php foreach ($layouts as $chave => [$nome, $desc, $mini]): ?>
+                  <label class="layout-op">
+                    <input type="radio" name="layout_ingredientes" value="<?= e($chave) ?>" <?= $layoutAtual === $chave ? 'checked' : '' ?>>
+                    <span class="layout-prev" aria-hidden="true"><?= $mini ?></span>
+                    <strong><?= e($nome) ?></strong>
+                    <small><?= e($desc) ?></small>
+                  </label>
+                <?php endforeach; ?>
+              </div>
+            </fieldset>
+            <button type="submit">Salvar layout</button>
+          </form>
+        </section>
+        <!-- novos netos da Página da receita entram aqui -->
+      </section>
+      <!-- novos filhos do Layout entram aqui -->
     </section>
   </div>
 </div>

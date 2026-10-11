@@ -238,7 +238,8 @@ main{flex:1}
 .amostra.rosa{background:#c2185b}.amostra.roxo{background:#7b3fc4}.amostra.amarelo{background:#e0ac00}.amostra.cyan{background:#0e9db8}
 
 /* ===== Receita: títulos maiores e imagens com limite de tamanho ===== */
-.receita h2{font-size:1.6rem;margin:1.6rem 0 .6rem}
+.receita{--h2-rec:clamp(1.4rem,4vw,1.85rem)}                       /* tamanho dos títulos de seção; os grupos de ingredientes ficam sempre menores */
+.receita h2{font-size:var(--h2-rec);margin:1.6rem 0 .6rem}
 .passo-img{display:block;width:auto;max-width:100%;height:auto;max-height:250px;object-fit:contain;border-radius:var(--r);margin:.6rem 0 .8rem}
 
 /* ===== Áreas de imagem clicáveis (capa e passos) ===== */
@@ -451,13 +452,14 @@ h1,h2,.card h2,.receita h1{overflow-wrap:anywhere;word-break:break-word;max-widt
 /* ===== Ingredientes em grupos (página da receita): 3 layouts, escolhidos em Configurações > Layout ===== */
 .ing-titulo{margin:0 0 .3rem}
 .ing-subtitulo .ing-grupo{margin-bottom:1rem}
-.ing-subtitulo .ing-titulo{font-family:var(--serif);font-weight:400;font-size:1.1rem;padding-bottom:.3rem;border-bottom:1px solid var(--bd);margin-bottom:.4rem}
+.ing-subtitulo .ing-titulo{font-family:var(--serif);font-weight:400;font-size:max(1.1rem,calc(var(--h2-rec) * .75));padding-bottom:.3rem;border-bottom:1px solid var(--bd);margin-bottom:.4rem}
 .ing-subtitulo .ing-grupo ul,.ing-cartoes .ing-grupo ul{margin:0 0 .4rem}
 .ing-cartoes .ing-grupos{column-count:2;column-gap:.8rem}
 .ing-cartoes .ing-grupo{break-inside:avoid;margin-bottom:.8rem;padding:.7rem 1rem .4rem;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)}
-.ing-cartoes .ing-titulo{font-family:var(--serif);font-weight:400;font-size:1.05rem}
+.ing-cartoes .ing-titulo{font-family:var(--serif);font-weight:400;font-size:max(1.05rem,calc(var(--h2-rec) * .72))}
 .ing-etiqueta .ing-grupo{margin-bottom:.9rem}
-.ing-etiqueta .ing-grupo ul{margin:.3rem 0 0}
+.ing-etiqueta .ing-titulo{font-size:1rem;padding:.15rem .85rem}
+.ing-etiqueta .ing-grupo ul{margin:.4rem 0 0}
 @media (max-width:560px){.ing-cartoes .ing-grupos{column-count:1}}
 
 /* ===== Configurações > Layout: cartões de escolha com miniatura ===== */
@@ -477,3 +479,11 @@ h1,h2,.card h2,.receita h1{overflow-wrap:anywhere;word-break:break-word;max-widt
 .layout-prev i.pl{width:30%;height:9px;border-radius:99px;background:var(--soft);border:1px solid var(--bd)}
 .layout-prev .cols{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .layout-prev .cartao{display:grid;gap:4px;align-content:start;padding:5px;border:1px solid var(--bd);border-radius:6px;background:var(--card)}
+
+/* ===== Configurações > Layout: níveis de seção (Layout > filho > neto) ===== */
+.cfg-sec + .cfg-sec{margin-top:1.6rem;padding-top:1.4rem;border-top:1px solid var(--bd)}
+.cfg-t2{margin:0 0 1rem;font-family:var(--serif);font-weight:400;font-size:1.35rem}
+.cfg-sub{padding-left:1rem;border-left:2px solid var(--bd)}
+.cfg-sub + .cfg-sub{margin-top:1.4rem}
+.cfg-t3{margin:0 0 .8rem;font-size:1rem}
+.form-cor > fieldset{justify-self:stretch;width:100%}   /* as opções de layout ocupam toda a largura (3 por linha) */
