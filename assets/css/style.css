@@ -447,3 +447,33 @@ h1,h2,.card h2,.receita h1{overflow-wrap:anywhere;word-break:break-word;max-widt
 
 /* ===== Página da receita: tags (e etiqueta de atualização) um pouco mais abaixo, longe dos botões editar/excluir ===== */
 .receita .tags{margin-top:1.1rem}
+
+/* ===== Ingredientes em grupos (página da receita): 3 layouts, escolhidos em Configurações > Layout ===== */
+.ing-titulo{margin:0 0 .3rem}
+.ing-subtitulo .ing-grupo{margin-bottom:1rem}
+.ing-subtitulo .ing-titulo{font-family:var(--serif);font-weight:400;font-size:1.1rem;padding-bottom:.3rem;border-bottom:1px solid var(--bd);margin-bottom:.4rem}
+.ing-subtitulo .ing-grupo ul,.ing-cartoes .ing-grupo ul{margin:0 0 .4rem}
+.ing-cartoes .ing-grupos{column-count:2;column-gap:.8rem}
+.ing-cartoes .ing-grupo{break-inside:avoid;margin-bottom:.8rem;padding:.7rem 1rem .4rem;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)}
+.ing-cartoes .ing-titulo{font-family:var(--serif);font-weight:400;font-size:1.05rem}
+.ing-etiqueta .ing-grupo{margin-bottom:.9rem}
+.ing-etiqueta .ing-grupo ul{margin:.3rem 0 0}
+@media (max-width:560px){.ing-cartoes .ing-grupos{column-count:1}}
+
+/* ===== Configurações > Layout: cartões de escolha com miniatura ===== */
+.layouts-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.8rem;width:100%;margin-bottom:.6rem}
+.layout-op{position:relative;display:grid;gap:.4rem;align-content:start;padding:.7rem;border:1px solid var(--bd);border-radius:var(--r);font-weight:500;cursor:pointer}
+.layout-op input{position:absolute;opacity:0;width:1px;height:1px}
+.layout-op:hover{border-color:var(--pri)}
+.layout-op:has(input:checked){border-color:var(--pri);box-shadow:inset 0 0 0 1px var(--pri)}
+.layout-op:has(input:focus-visible){outline:2px solid var(--pri);outline-offset:2px}
+.layout-op small{color:var(--mut);font-weight:400}
+.layout-prev{display:grid;align-content:start;gap:4px;height:92px;padding:8px;overflow:hidden;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r-img)}
+.layout-prev i{display:block;height:4px;border-radius:2px;background:var(--bd)}
+.layout-prev i.b{width:85%}
+.layout-prev i.c{width:65%}
+.layout-prev i.tt{width:34%;height:5px;background:var(--mut)}
+.layout-prev i.ln{height:1px;border-radius:0}
+.layout-prev i.pl{width:30%;height:9px;border-radius:99px;background:var(--soft);border:1px solid var(--bd)}
+.layout-prev .cols{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.layout-prev .cartao{display:grid;gap:4px;align-content:start;padding:5px;border:1px solid var(--bd);border-radius:6px;background:var(--card)}

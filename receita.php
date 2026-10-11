@@ -2,6 +2,21 @@
 /* Visualização completa de uma receita (receita.php?id=N). */
 require_once 'includes/config.php';
 
+/** Divide o texto dos ingredientes em grupos. Uma linha que começa com "-" (ex.: "- Recheio") é o título de um novo grupo. */
+function ingredientes_agrupados(string $texto): array {
+    $grupos = [['titulo' => '', 'itens' => []]];
+    foreach (linhas($texto) as $linha) {
+        if (preg_match('/^[-\x{2013}\x{2014}]\s*(.*)$/u', $linha, $m)) {   // traço (também aceita – e —) = título de grupo
+            $titulo = trim(rtrim(trim($m[1]), ':'));                          // "- Recheio:" também vale; o ":" some
+            if ($titulo === '') continue;
+            $grupos[] = ['titulo' => $titulo, 'itens' => []];
+        } else {
+            $grupos[count($grupos) - 1]['itens'][] = $linha;                 // item do grupo atual (ou do grupo sem título, no início)
+        }
+    }
+    return array_values(array_filter($grupos, fn($g) => $g['titulo'] !== '' || $g['itens']));
+}
+
 $stmt = db()->prepare('SELECT r.*, DATE_FORMAT(r.atualizado_em, \'%d/%m/%Y %H:%i\') AS atualizado_fmt, c.nome AS categoria, o.nome AS ocasiao, u.nome AS culinaria, k.nome AS custo
        FROM receitas r JOIN categorias c ON c.id = r.categoria_id
        LEFT JOIN ocasioes o ON o.id = r.ocasiao_id
@@ -28,6 +43,15 @@ $passos = $ps->fetchAll();
 $ut = db()->prepare('SELECT ru.quantidade, u.nome FROM receita_utensilios ru JOIN utensilios u ON u.id = ru.utensilio_id WHERE ru.receita_id = ? ORDER BY ru.id');
 $ut->execute([$r['id']]);
 $utens = $ut->fetchAll();
+
+// Layout dos ingredientes (escolhido em Configurações > Layout). Sem a tabela/valor, usa "etiqueta".
+$layout_ing = 'etiqueta';
+try {
+    $v = db()->query("SELECT valor FROM ajustes WHERE chave = 'layout_ingredientes'")->fetchColumn();
+    if (in_array($v, ['subtitulo', 'cartoes', 'etiqueta'], true)) $layout_ing = $v;
+} catch (PDOException $ex) { /* tabela ainda não criada: mantém o padrão */ }
+$grupos = ingredientes_agrupados($r['ingredientes']);
+$ing_simples = count($grupos) <= 1 && ($grupos[0]['titulo'] ?? '') === '';   // sem títulos: lista simples, como antes
 require 'includes/header.php';
 ?>
 <article class="receita">
@@ -74,9 +98,16 @@ require 'includes/header.php';
   <?php endif; ?>
 
   <div class="ingr-utens<?= $utens ? '' : ' so-ingr' ?>">
-    <section>
+    <section class="ing <?= $ing_simples ? 'ing-simples' : 'ing-' . e($layout_ing) ?>">
       <h2>Ingredientes</h2>
-      <ul><?php foreach (linhas($r['ingredientes']) as $i): ?><li><?= e($i) ?></li><?php endforeach; ?></ul>
+      <div class="ing-grupos">
+        <?php foreach ($grupos as $g): ?>
+          <div class="ing-grupo">
+            <?php if ($g['titulo'] !== ''): ?><h3 class="ing-titulo<?= $layout_ing === 'etiqueta' ? ' tag' : '' ?>"><?= e($g['titulo']) ?></h3><?php endif; ?>
+            <?php if ($g['itens']): ?><ul><?php foreach ($g['itens'] as $i): ?><li><?= e($i) ?></li><?php endforeach; ?></ul><?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+      </div>
     </section>
     <?php if ($utens): ?>   <!-- sem utensílios, a seção e o título não aparecem -->
       <section>

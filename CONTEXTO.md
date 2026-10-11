@@ -95,7 +95,8 @@ site-receitas/
 │       ├── atualizar_campos.sql       ocasioes, culinarias, custos + FKs opcionais em receitas
 │       ├── atualizar_passos.sql       passos.titulo (opcional)
 │       ├── atualizar_utensilios.sql   utensilios + receita_utensilios
-│       └── atualizar_datas.sql        receitas.atualizado_em (data da última atualização)
+│       ├── atualizar_datas.sql        receitas.atualizado_em (data da última atualização)
+│       └── atualizar_layout.sql       tabela ajustes (layout dos ingredientes)
 │
 └── uploads/                   .htaccess (bloqueia execução de scripts) e .gitkeep; {ID da receita}/ e users/ criadas pelo PHP
 ```
@@ -112,7 +113,7 @@ constantes `DIFICULDADES` e `CORES`.
 ## 4. Banco de dados (`receitas_db`)
 
 Todas as tabelas InnoDB, `utf8mb4`. Ordem de execução em uma instalação nova:
-`database/database.sql` → `database/atualizar/atualizar_banco.sql` → `…/atualizar_perfil.sql` → `…/atualizar_cor.sql` → `…/atualizar_categorias.sql` → `…/atualizar_campos.sql` → `…/atualizar_passos.sql` → `…/atualizar_utensilios.sql` → `…/atualizar_datas.sql`.
+`database/database.sql` → `database/atualizar/atualizar_banco.sql` → `…/atualizar_perfil.sql` → `…/atualizar_cor.sql` → `…/atualizar_categorias.sql` → `…/atualizar_campos.sql` → `…/atualizar_passos.sql` → `…/atualizar_utensilios.sql` → `…/atualizar_datas.sql` → `…/atualizar_layout.sql`.
 Atalho: `database/receitas_db.sql` recria a estrutura final de uma vez, mas traz dados reais (ver seção 0) — use apenas uma cópia só com a estrutura.
 Os scripts `atualizar_*.sql` são "rode UMA vez" (não são idempotentes por causa dos `ALTER`).
 O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `password_hash`, nunca texto puro).
@@ -158,6 +159,12 @@ O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `passwo
 ### Listas de opções (todas com a mesma forma)
 `categorias`, `ocasioes`, `culinarias`, `custos`, `utensilios` → `id INT UNSIGNED PK AI`, `nome VARCHAR(40) NOT NULL UNIQUE`.
 
+### `ajustes` (configurações gerais do site, chave/valor)
+| Coluna | Tipo | Observação |
+|---|---|---|
+| chave | VARCHAR(50) PK | hoje só `layout_ingredientes` |
+| valor | VARCHAR(100) NOT NULL | `subtitulo`, `cartoes` ou `etiqueta` (padrão `etiqueta`) |
+
 ### `receita_utensilios` (vínculo N:N com quantidade)
 | Coluna | Tipo | Observação |
 |---|---|---|
@@ -173,7 +180,7 @@ O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `passwo
 
 **Público**
 - Home com grade de cartões (capa, título, categoria, dificuldade, tempo) e busca por título/ingrediente.
-- Página da receita: título, etiquetas (categoria, ocasião, culinária), capa em proporção fixa (2:1, `object-fit: cover`) ocupando ~80% com as informações rápidas empilhadas (~20%: dificuldade, tempo, rendimento, custo), vídeo do YouTube incorporado, ingredientes com utensílios à direita (a seção some se não houver utensílios) e passos numerados (título opcional + imagem opcional). Na linha das tags, à direita, uma etiqueta no mesmo estilo com ícone de relógio mostra a data da última atualização.
+- Página da receita: título, etiquetas (categoria, ocasião, culinária), capa em proporção fixa (2:1, `object-fit: cover`) ocupando ~80% com as informações rápidas empilhadas (~20%: dificuldade, tempo, rendimento, custo), vídeo do YouTube incorporado, ingredientes com utensílios à direita (a seção some se não houver utensílios) e passos numerados (título opcional + imagem opcional). Na linha das tags, à direita, uma etiqueta no mesmo estilo com ícone de relógio mostra a data da última atualização. Os ingredientes podem ter **grupos**: uma linha que começa com `-` (ex.: `- Recheio`) vira o título do grupo, mostrado no layout escolhido em Configurações > Layout; receitas sem títulos continuam como lista simples.
 - Tema claro/escuro (ícone lua/sol, `localStorage`, sem "flash" ao carregar), rodapé fixo no fim da tela, responsivo.
 
 **Administrador**
@@ -181,7 +188,7 @@ O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `passwo
 - Cadastro/edição de receita: título, capa (área clicável com preview e X para remover), categoria, ocasião, culinária, dificuldade, tempo, rendimento, custo, vídeo, ingredientes, **utensílios** (linhas quantidade + utensílio, dinâmicas) e **passos** dinâmicos (título opcional, foto clicável, texto, lixeira). Na edição, a linha do título mostra à direita, em fonte pequena e só com ícones, a data de criação (calendário) e a de atualização (relógio); no cadastro esse bloco não aparece.
 - Exclusão de receita com limpeza recursiva de `uploads/{ID}/`.
 - Perfil: foto por AJAX (clicar no avatar; X vermelho remove), login, nova senha (com confirmação e olho mostrar/ocultar).
-- Configurações (`configuracoes.php`): menu lateral com abas trocadas por JS, sem recarregar — **Receitas** (tabela com capa, busca em tempo real, rolagem interna de ~10 linhas, ícones de editar/excluir), **Categorias**, **Ocasiões**, **Culinárias**, **Custo**, **Utensílios** (mesmo CRUD: ID, nome editável, receitas vinculadas, salvar/excluir; exclusão bloqueada se em uso), **Usuários** (somente leitura), **Cor**.
+- Configurações (`configuracoes.php`): menu lateral com abas trocadas por JS, sem recarregar — **Receitas** (tabela com capa, busca em tempo real, rolagem interna de ~10 linhas, ícones de editar/excluir), **Categorias**, **Ocasiões**, **Culinárias**, **Custo**, **Utensílios** (mesmo CRUD: ID, nome editável, receitas vinculadas, salvar/excluir; exclusão bloqueada se em uso), **Usuários** (somente leitura), **Cor**, **Layout** (estilo dos ingredientes na página da receita: subtítulo com linha, cartões em colunas ou etiqueta; vale para todos os visitantes).
 - Cor de destaque (9 opções) aplicada só para o admin logado; visitantes sempre veem o neutro.
 - Notificações flutuantes (toast) para todos os avisos de sucesso/erro das telas de Configurações e Perfil.
 
@@ -224,6 +231,8 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 - **"Custo" no singular** em toda a interface; a tabela interna segue `custos`.
 - **Senha atual removida do perfil** a pedido do dono (troca de login/senha sem confirmar a senha antiga; é um *trade-off* de segurança consciente).
 - **Anti-cache:** o CSS e os JS são carregados com `?v=` + data de modificação do arquivo (`filemtime`), para o navegador sempre baixar a versão nova depois de cada cópia por cima. Evita botões "mortos" por JS antigo em cache.
+- **Grupos de ingredientes por convenção no texto:** linha começando com `-` (também aceita `–` e `—`) é título de grupo; `:` no fim é ignorado (`- Recheio:` = `- Recheio`). Sem mudança no banco: continua uma só coluna `ingredientes`. O agrupamento é feito por `ingredientes_agrupados()`, definida em `receita.php`. Receitas antigas que usavam `Recheio:` sem o traço devem ser editadas para `- Recheio`. Opção futura, se a convenção não satisfizer: grupos estruturados (título + lista) como os passos, com tabela própria.
+- **Layout dos ingredientes é um ajuste do site** (vale para visitantes, não só para o admin), guardado na tabela `ajustes` (`layout_ingredientes`). `receita.php` e `configuracoes.php` tratam a ausência da tabela/valor usando `etiqueta`. A lista de layouts válidos está repetida nos dois arquivos (`['subtitulo','cartoes','etiqueta']` e o array `$layouts`); ao criar um novo layout, atualizar os dois e o CSS (`.ing-*`).
 - **Datas da receita:** `criado_em` é automático; `atualizado_em` é gravado explicitamente com `NOW()` no `UPDATE` de `processar_receita()` (o `ON UPDATE CURRENT_TIMESTAMP` do MySQL não marcaria edições só de passos, utensílios ou imagens, pois a linha de `receitas` não mudaria). Datas formatadas no SQL com `DATE_FORMAT(..., '%d/%m/%Y %H:%i')`, sem helper novo no `config.php`.
 - **Formulário de receita: Ingredientes e Utensílios lado a lado**, em blocos de mesma largura e altura fixa (`.bloco-form`, 20rem), com rolagem interna na caixa de texto e na grade de utensílios (cabeçalho fixo: Quantidade, Utensílio e lixeira; botão "+" no topo do bloco). A linha nova nasce com quantidade 1 e "Selecione". Abaixo de 700px os blocos empilham. Texto e linhas são compactos (fonte `.85rem`, linhas de utensílio baixas) para caber mais itens à vista.
 

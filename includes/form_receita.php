@@ -116,9 +116,9 @@ $utens   = ($_SERVER['REQUEST_METHOD'] === 'POST') ? utensilios_do_post() : ($ut
   <div class="ingr-utens-form">
     <section class="bloco-form" aria-labelledby="t-ingredientes">
       <div class="bloco-topo">
-        <div class="bloco-tit"><h2 id="t-ingredientes">Ingredientes</h2><small>um por linha</small></div>
+        <div class="bloco-tit"><h2 id="t-ingredientes">Ingredientes</h2><small>um por linha · "- Título" cria um grupo</small></div>
       </div>
-      <textarea name="ingredientes" required aria-labelledby="t-ingredientes"><?= e($d['ingredientes']) ?></textarea>
+      <textarea name="ingredientes" required aria-labelledby="t-ingredientes" placeholder="- Recheio&#10;250 g de carne de porco&#10;2 dentes de alho&#10;&#10;- Massa&#10;200 g de farinha de trigo"><?= e($d['ingredientes']) ?></textarea>
     </section>
 
     <!-- Utensílios (opcional): vários por receita, cada linha com quantidade + utensílio cadastrado -->

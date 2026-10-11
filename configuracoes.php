@@ -16,6 +16,16 @@ $listas = [
     'utensilios' => ['tabela' => 'utensilios', 'de' => 'receita_utensilios', 'coluna' => 'utensilio_id', 'titulo' => 'Utensílios', 'rotulo' => 'Utensílio', 'fem' => false, 'cab' => 'Nome do Utensílio'],   // vínculo pela tabela receita_utensilios
 ];
 
+// Layouts disponíveis para os ingredientes na página da receita: chave => [nome, descrição, miniatura]
+$layouts = [
+    'subtitulo' => ['Subtítulo com linha', 'Cada grupo ganha um título e uma linha fina; as listas ficam uma abaixo da outra.',
+                    '<i class="tt"></i><i class="ln"></i><i class="b"></i><i class="c"></i><i class="tt"></i><i class="ln"></i><i class="b"></i>'],
+    'cartoes'   => ['Cartões em colunas', 'Cada grupo é um cartão; os cartões ocupam duas colunas dentro de Ingredientes.',
+                    '<span class="cols"><span class="cartao"><i class="tt"></i><i class="b"></i><i class="c"></i><i class="b"></i></span><span class="cartao"><i class="tt"></i><i class="c"></i><i class="b"></i></span></span>'],
+    'etiqueta'  => ['Etiqueta (estilo das tags)', 'O título vira uma etiqueta, igual às tags da receita.',
+                    '<i class="pl"></i><i class="b"></i><i class="c"></i><i class="b"></i><i class="pl"></i><i class="c"></i><i class="b"></i>'],
+];
+
 foreach ($listas as &$cfg) $cfg += ['de' => 'receitas'];     // tabela que referencia a opção (padrão: receitas)
 unset($cfg);
 
@@ -26,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id    = (int)($_POST['id'] ?? 0);
     $nome  = trim($_POST['nome'] ?? '');
     $ok    = '';
-    $aba   = $acao === 'cor' ? 'cor' : (isset($listas[$lista]) ? $lista : 'receitas');
+    $aba   = in_array($acao, ['cor', 'layout'], true) ? $acao : (isset($listas[$lista]) ? $lista : 'receitas');
     try {
         if ($acao === 'cor') {
             $cor = (string)($_POST['cor_destaque'] ?? '');
@@ -35,6 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $pdo->prepare('UPDATE usuarios SET cor_destaque = ? WHERE id = ?')->execute([$cor, $_SESSION['admin_id']]);
                 $ok = 'Cor atualizada.';
+            }
+        } elseif ($acao === 'layout') {
+            $lay = (string)($_POST['layout_ingredientes'] ?? '');
+            if (!isset($layouts[$lay])) {
+                $erro = 'Escolha um layout válido.';
+            } else {
+                $pdo->prepare("INSERT INTO ajustes (chave, valor) VALUES ('layout_ingredientes', ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)")->execute([$lay]);
+                $ok = 'Layout atualizado.';
             }
         } elseif (!isset($listas[$lista])) {
             $erro = 'Ação inválida.';
@@ -89,6 +107,12 @@ $st = $pdo->prepare('SELECT cor_destaque FROM usuarios WHERE id = ?');
 $st->execute([$_SESSION['admin_id']]);
 $corAtual = $st->fetchColumn() ?: 'neutro';
 
+$layoutAtual = 'etiqueta';                                   // padrão, se a tabela ajustes ainda não existir
+try {
+    $v = $pdo->query("SELECT valor FROM ajustes WHERE chave = 'layout_ingredientes'")->fetchColumn();
+    if (is_string($v) && isset($layouts[$v])) $layoutAtual = $v;
+} catch (PDOException $ex) { /* tabela ainda não criada */ }
+
 $svg = fn(string $d) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $svgLapis     = $svg('<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>');
 $svgLixeira   = $svg('<path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/>');
@@ -107,6 +131,7 @@ require 'includes/header.php';
     <?php foreach ($listas as $k => $cfg): ?><a href="#<?= e($k) ?>" data-aba="<?= e($k) ?>"><?= e($cfg['titulo']) ?></a><?php endforeach; ?>
     <a href="#usuarios" data-aba="usuarios">Usuários</a>
     <a href="#cor" data-aba="cor">Cor</a>
+    <a href="#layout" data-aba="layout">Layout</a>
   </nav>
 
   <div class="conteudo">
@@ -236,6 +261,30 @@ require 'includes/header.php';
           <?php endforeach; ?>
         </div>
         <button type="submit">Salvar cor</button>
+      </form>
+    </section>
+
+    <!-- ===== Layout (vale para todos os visitantes) ===== -->
+    <section id="layout" class="aba" hidden>
+      <div class="crud-header"><h2>Layout</h2></div>
+      <form class="form-cor" method="post">
+        <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+        <input type="hidden" name="acao" value="layout">
+        <fieldset>
+          <legend>Ingredientes na página da receita</legend>
+          <div class="layouts-lista">
+            <?php foreach ($layouts as $chave => [$nome, $desc, $mini]): ?>
+              <label class="layout-op">
+                <input type="radio" name="layout_ingredientes" value="<?= e($chave) ?>" <?= $layoutAtual === $chave ? 'checked' : '' ?>>
+                <span class="layout-prev" aria-hidden="true"><?= $mini ?></span>
+                <strong><?= e($nome) ?></strong>
+                <small><?= e($desc) ?></small>
+              </label>
+            <?php endforeach; ?>
+          </div>
+          <small>Vale para quem visita o site. Receitas sem títulos de grupo continuam como lista simples. Para criar um grupo, comece uma linha com "-" na caixa de ingredientes (ex.: "- Recheio").</small>
+        </fieldset>
+        <button type="submit">Salvar layout</button>
       </form>
     </section>
   </div>
