@@ -457,9 +457,11 @@ h1,h2,.card h2,.receita h1{overflow-wrap:anywhere;word-break:break-word;max-widt
 .ing-cartoes .ing-grupos{column-count:2;column-gap:.8rem}
 .ing-cartoes .ing-grupo{break-inside:avoid;margin-bottom:.8rem;padding:.7rem 1rem .4rem;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)}
 .ing-cartoes .ing-titulo{font-family:var(--serif);font-weight:400;font-size:max(1.05rem,calc(var(--h2-rec) * .72))}
-.ing-etiqueta .ing-grupo{margin-bottom:.9rem}
+.ing-etiqueta .ing-grupo + .ing-grupo{margin-top:1.7rem}      /* mais espaço entre o fim de um grupo e a etiqueta do próximo */
 .ing-etiqueta .ing-titulo{font-size:1rem;padding:.15rem .85rem}
-.ing-etiqueta .ing-grupo ul{margin:.4rem 0 0}
+.ing-etiqueta .ing-grupo:first-child .ing-titulo{margin-top:.8rem}   /* a 1ª etiqueta não fica grudada no título "Ingredientes" */
+.ing-etiqueta .ing-titulo{margin-bottom:0}                      /* a etiqueta fica colada na lista que vem abaixo dela */
+.ing-etiqueta .ing-grupo ul{margin:.3rem 0 0}
 @media (max-width:560px){.ing-cartoes .ing-grupos{column-count:1}}
 
 /* ===== Configurações > Layout: cartões de escolha com miniatura ===== */
