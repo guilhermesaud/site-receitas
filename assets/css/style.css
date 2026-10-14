@@ -489,3 +489,36 @@ h1,h2,.card h2,.receita h1{overflow-wrap:anywhere;word-break:break-word;max-widt
 .cfg-sub + .cfg-sub{margin-top:1.4rem}
 .cfg-t3{margin:0 0 .8rem;font-size:1rem}
 .form-cor > fieldset{justify-self:stretch;width:100%}   /* as opções de layout ocupam toda a largura (3 por linha) */
+
+/* ===== Ícones ao lado dos títulos de seção da receita (Configurações > Layout > Ícones das seções) ===== */
+.receita h2{display:flex;align-items:center;gap:.55rem}
+.sec-ico{width:1.05em;height:1.05em;flex:none;color:var(--pri)}
+.sec-ico-m{background:var(--pri);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}   /* PNG vira silhueta na cor do tema (a imagem vem no style inline) */
+
+.ico-sec{width:100%;padding:.8rem 1rem 1rem;border:1px solid var(--bd);border-radius:var(--r)}
+.ico-sec legend{padding:0 .4rem}
+.ico-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:.4rem}
+.ico-op{position:relative;display:grid;place-items:center;height:46px;border:1px solid var(--bd);border-radius:var(--r);color:var(--ink);cursor:pointer}
+.ico-op input{position:absolute;opacity:0;width:1px;height:1px}
+.ico-op svg{width:22px;height:22px}
+.ico-op .sec-ico{width:24px;height:24px}
+.ico-nenhum span{font-size:.7rem;font-weight:400;color:var(--mut)}
+.ico-op:hover{border-color:var(--pri)}
+.ico-op:has(input:checked){border-color:var(--pri);box-shadow:inset 0 0 0 1px var(--pri);color:var(--pri)}
+.ico-op:has(input:focus-visible){outline:2px solid var(--pri);outline-offset:2px}
+.ico-envio{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1.4rem}
+.ico-up{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;font-weight:400}
+.ico-up input{width:auto;padding:.3rem}
+
+/* ===== Ícones das seções: prévia fixa + lista recolhível ===== */
+.ico-topo{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1rem}
+.ico-prev{display:flex;align-items:center;gap:.55rem;min-width:230px;padding:.45rem .9rem;border:1px solid var(--bd);border-radius:var(--r);background:var(--bg)}
+.ico-prev-i{display:inline-flex;font-size:1.35rem}
+.ico-prev-i:empty{display:none}
+.ico-prev-t{font-family:var(--serif);font-size:1.35rem;line-height:1.3}
+.ico-nome{flex:1;min-width:8rem;color:var(--mut)}
+.ico-abrir{display:inline-flex;align-items:center;gap:.4rem;border-radius:var(--r)}
+.ico-abrir svg{width:16px;height:16px;transition:transform .15s ease}
+.ico-abrir[aria-expanded="true"] svg{transform:rotate(180deg)}
+.ico-grade[hidden]{display:none}                    /* o display:grid da lista anularia o atributo hidden */
+@media (prefers-reduced-motion:reduce){.ico-abrir svg{transition:none}}

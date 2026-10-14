@@ -1,6 +1,7 @@
 <?php
 /* Visualização completa de uma receita (receita.php?id=N). */
 require_once 'includes/config.php';
+require_once 'includes/icones.php';
 
 /** Divide o texto dos ingredientes em grupos. Uma linha que começa com "-" (ex.: "- Recheio") é o título de um novo grupo. */
 function ingredientes_agrupados(string $texto): array {
@@ -52,6 +53,7 @@ try {
 } catch (PDOException $ex) { /* tabela ainda não criada: mantém o padrão */ }
 $grupos = ingredientes_agrupados($r['ingredientes']);
 $ing_simples = count($grupos) <= 1 && ($grupos[0]['titulo'] ?? '') === '';   // sem títulos: lista simples, como antes
+$ico = icones_secoes();                                                       // ícones dos títulos de seção (Configurações > Layout)
 require 'includes/header.php';
 ?>
 <article class="receita">
@@ -99,7 +101,7 @@ require 'includes/header.php';
 
   <div class="ingr-utens<?= $utens ? '' : ' so-ingr' ?>">
     <section class="ing <?= $ing_simples ? 'ing-simples' : 'ing-' . e($layout_ing) ?>">
-      <h2>Ingredientes</h2>
+      <h2><?= icone_html($ico['ingredientes']) ?>Ingredientes</h2>
       <div class="ing-grupos">
         <?php foreach ($grupos as $g): ?>
           <div class="ing-grupo">
@@ -111,13 +113,13 @@ require 'includes/header.php';
     </section>
     <?php if ($utens): ?>   <!-- sem utensílios, a seção e o título não aparecem -->
       <section>
-        <h2>Utensílios</h2>
+        <h2><?= icone_html($ico['utensilios']) ?>Utensílios</h2>
         <ul><?php foreach ($utens as $u): ?><li><?= (int)$u['quantidade'] ?>× <?= e($u['nome']) ?></li><?php endforeach; ?></ul>
       </section>
     <?php endif; ?>
   </div>
 
-  <h2>Modo de preparo</h2>
+  <h2><?= icone_html($ico['preparo']) ?>Modo de preparo</h2>
   <ol>
     <?php foreach ($passos as $p): ?>
       <li><?php if ($p['titulo']): ?><strong class="passo-titulo"><?= e($p['titulo']) ?></strong><?php endif; ?><?= nl2br(e($p['instrucao'])) ?>

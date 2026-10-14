@@ -74,7 +74,8 @@ site-receitas/
 │   ├── header.php             <head>, tema salvo, fonte automática, menu, busca, ícone de tema, avatar/dropdown ou "Entrar"
 │   ├── footer.php             Rodapé, carrega app.js e imprime os toasts pendentes (flash da sessão)
 │   ├── form_receita.php       Formulário compartilhado (cadastro/edição): capa, 7 campos, utensílios e passos dinâmicos
-│   └── salvar_receita.php     Validação + gravação da receita; utilitários de upload e de apagar arquivos/pastas
+│   ├── salvar_receita.php     Validação + gravação da receita; utilitários de upload e de apagar arquivos/pastas
+│   └── icones.php             Biblioteca de ícones SVG (ICONES), seções que aceitam ícone (SECOES_ICONE) e funções icones_secoes(), icone_html(), icone_arquivo(), png_icone_erro()
 │
 ├── assets/
 │   ├── css/style.css          Toda a folha de estilo
@@ -99,7 +100,7 @@ site-receitas/
 │       ├── atualizar_layout.sql       tabela ajustes (layout dos ingredientes)
 │       └── atualizar_cor_global.sql   copia a cor do admin para ajustes (cor vale para todo o site)
 │
-└── uploads/                   .htaccess (bloqueia execução de scripts) e .gitkeep; {ID da receita}/ e users/ criadas pelo PHP
+└── uploads/                   .htaccess (bloqueia execução de scripts) e .gitkeep; {ID da receita}/, users/ e layout/ (PNGs dos ícones das seções) criadas pelo PHP
 ```
 
 **Helpers globais (`includes/config.php`):** `db()`, `e()` (escape HTML), `fmt_tempo()`, `linhas()`, `youtube_embed()`,
@@ -163,7 +164,7 @@ O usuário admin é criado **manualmente** com `INSERT` (hash gerado por `passwo
 ### `ajustes` (configurações gerais do site, chave/valor)
 | Coluna | Tipo | Observação |
 |---|---|---|
-| chave | VARCHAR(50) PK | `layout_ingredientes` e `cor_destaque` |
+| chave | VARCHAR(50) PK | `layout_ingredientes`, `cor_destaque`, `icone_ingredientes`, `icone_utensilios` e `icone_preparo` |
 | valor | VARCHAR(100) NOT NULL | `layout_ingredientes`: `subtitulo`, `cartoes` ou `etiqueta` (padrão `etiqueta`); `cor_destaque`: uma chave de `CORES` (padrão `neutro`) |
 
 ### `receita_utensilios` (vínculo N:N com quantidade)
@@ -234,6 +235,7 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 - **Anti-cache:** o CSS e os JS são carregados com `?v=` + data de modificação do arquivo (`filemtime`), para o navegador sempre baixar a versão nova depois de cada cópia por cima. Evita botões "mortos" por JS antigo em cache.
 - **Grupos de ingredientes por convenção no texto:** linha começando com `-` (também aceita `–` e `—`) é título de grupo; `:` no fim é ignorado (`- Recheio:` = `- Recheio`). Sem mudança no banco: continua uma só coluna `ingredientes`. O agrupamento é feito por `ingredientes_agrupados()`, definida em `receita.php`. Receitas antigas que usavam `Recheio:` sem o traço devem ser editadas para `- Recheio`. Opção futura, se a convenção não satisfizer: grupos estruturados (título + lista) como os passos, com tabela própria.
 - **Ajustes visuais do site (cor e layout dos ingredientes) valem para todos**; o **tema claro/escuro** é a exceção e continua individual (preferência salva no navegador de cada visitante). O layout dos ingredientes é um ajuste do site, guardado na tabela `ajustes` (`layout_ingredientes`). `receita.php` e `configuracoes.php` tratam a ausência da tabela/valor usando `etiqueta`. A lista de layouts válidos está repetida nos dois arquivos (`['subtitulo','cartoes','etiqueta']` e o array `$layouts`); ao criar um novo layout, atualizar os dois e o CSS (`.ing-*`).
+- **Ícones das seções da receita** (Configurações > Layout > Página da receita > Ícones das seções): cada título de seção (Ingredientes, Utensílios, Modo de preparo) pode ter um ícone à esquerda. Valores em `ajustes` (`icone_<seção>`): `''` (nenhum), `lib:<nome>` (biblioteca `ICONES` em `includes/icones.php`: SVG de traço, `currentColor`), `up:layout/<hex16>.png` (PNG do admin **recolorido pela cor do tema** via máscara CSS) ou `img:layout/<hex16>.png` (PNG com as cores originais, opção "Manter as cores originais"). Os ícones usam `var(--pri)` (cor de destaque). PNG próprio: só PNG, **fundo transparente**, até 200 KB e 1024×1024 px (conferido por `png_icone_erro()` lendo o cabeçalho, sem GD), gravado em `uploads/layout/` com nome aleatório; o PNG anterior é apagado ao trocar/remover. **Não se aceita upload de SVG** (poderia carregar código); a biblioteca cobre o caso. Um PNG novo enviado vale mais que o ícone marcado na lista. Sem a tabela `ajustes` ou sem valor, a seção fica sem ícone. **Tela de configuração:** cada seção tem uma **prévia fixa** (o título com o ícone ativo + o nome do ícone) e o botão "Escolher ícone", que abre/fecha a lista da biblioteca (recolhe ao escolher); a prévia atualiza ao vivo (JS em `configuracoes.js`) ao escolher um ícone, enviar um PNG ou marcar/desmarcar "Manter as cores originais do PNG". Escolher na lista limpa o arquivo pendente; um PNG novo escolhido vale mais que a lista (igual ao servidor).
 - **Aba Layout em níveis (estrutura para futuros ajustes):** Layout (pai, `<section id="layout" class="aba">`) > filhos `<section class="cfg-sec">` com título `h3.cfg-t2` (hoje: Cores e Página da receita) > netos `<section class="cfg-sub">` com título `h4.cfg-t3` (hoje: Ingredientes, dentro de Página da receita). Cada ajuste tem seu próprio `<form class="form-cor">` com `acao` e botão Salvar; um novo ajuste é um bloco copiado desses (há comentários no PHP marcando onde entram novos filhos e netos) mais o tratamento do `acao` no POST de `configuracoes.php`. Os títulos internos usam ids com prefixo `lay-` e **nenhuma regra de CSS por id** (ver a regra sobre colisão de ids na seção 9). POSTs de `cor` e `layout` redirecionam para `#layout`.
 - **Tamanho dos títulos na página da receita:** `--h2-rec` (em `.receita`) = `clamp(1.4rem,4vw,1.85rem)` e vale para Ingredientes, Utensílios e Modo de preparo; os títulos dos grupos de ingredientes são sempre **menores** (subtítulo: `max(1.1rem, 75% de --h2-rec)`; cartões: `max(1.05rem, 72%)`; etiqueta: `1rem`). O `h1` da receita continua maior que os `h2`.
 - **Cabeçalho do passo:** o rótulo "Passo N" (maior que o texto) e o campo de título do passo são alinhados pela **linha de base** (`align-self:baseline`), não pelo centro; a lixeira continua centralizada na linha.
@@ -262,6 +264,8 @@ Não foram pedidas ainda; foram sugestões feitas durante a conversa ou lacunas 
 ## 9. Problemas conhecidos e bugs já corrigidos
 
 **Corrigidos**
+- Cuidado (já tratado na lista de ícones): um `display:grid` na classe anula o atributo `hidden` e a lista recolhida continuaria visível; por isso existe `.ico-grade[hidden]{display:none}`. **Regra:** todo elemento que usa `hidden` e tem `display` definido no CSS precisa de uma regra `[hidden]{display:none}` própria.
+- Ícone PNG recolorido não aparecia: o `url()` relativo estava numa variável CSS (`--u`), e o navegador o resolve a partir do `style.css` (pasta errada). Corrigido colocando `mask-image` direto no `style` inline do elemento. **Regra:** nunca passar `url()` relativo por variável CSS.
 - *Fatal error: função `utensilios_do_post()` indefinida* ao salvar receita (a função era chamada mas faltava no arquivo) → definida em `includes/salvar_receita.php`.
 - Desalinhamento de largura entre páginas (barra de rolagem aparecendo/sumindo, caixa da receita com largura própria, `fieldset` alargando o formulário) → `.container` único, `overflow-y:scroll`, `fieldset{min-width:0}`.
 - Formulário de receita estreito (herdava `max-width: 720px`) → classe `.form-receita` sem limite.

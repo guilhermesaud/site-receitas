@@ -1,6 +1,7 @@
 <?php
 /* Configurações (painel com abas): Receitas, listas de opções, Usuários e Cor — somente administrador. */
-require_once 'includes/config.php';
+require_once 'includes/salvar_receita.php';   // inclui o config.php e as funções de upload
+require_once 'includes/icones.php';
 exige_admin();
 
 $pdo  = db();
@@ -36,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id    = (int)($_POST['id'] ?? 0);
     $nome  = trim($_POST['nome'] ?? '');
     $ok    = '';
-    $aba   = in_array($acao, ['cor', 'layout'], true) ? 'layout' : (isset($listas[$lista]) ? $lista : 'receitas');   // cor e layout ficam na mesma aba
+    $aba   = in_array($acao, ['cor', 'layout', 'icones'], true) ? 'layout' : (isset($listas[$lista]) ? $lista : 'receitas');   // cor e layout ficam na mesma aba
     try {
         if ($acao === 'cor') {
             $cor = (string)($_POST['cor_destaque'] ?? '');
@@ -53,6 +54,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $pdo->prepare("INSERT INTO ajustes (chave, valor) VALUES ('layout_ingredientes', ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)")->execute([$lay]);
                 $ok = 'Layout atualizado.';
+            }
+        } elseif ($acao === 'icones') {
+            $atuais = icones_secoes();
+            $plano  = [];      // seção => novo valor
+            $novos  = [];      // PNGs gravados nesta requisição (desfeitos se algo falhar)
+            $velhos = [];      // PNGs antigos, apagados depois de gravar
+            $msg    = '';
+            foreach (SECOES_ICONE as $sec => $rot) {
+                $esc   = (string)($_POST["ico_$sec"] ?? 'none');
+                $cores = isset($_POST["ico_{$sec}_cores"]);
+                $arqAt = icone_arquivo($atuais[$sec]);
+                $env   = $_FILES["ico_{$sec}_arquivo"] ?? null;
+                if ($env && ($env['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {      // PNG novo enviado
+                    [$ext, $e] = validar_imagem($env, "Ícone de $rot");
+                    if (!$e && $ext !== 'png') $e = "Ícone de $rot: envie um PNG com fundo transparente.";
+                    if (!$e && ($pe = png_icone_erro($env['tmp_name'], (int)$env['size']))) $e = "Ícone de $rot: $pe";
+                    if ($e) { $msg = $e; break; }
+                    $rel = guardar_imagem($env, 'png', 'layout');
+                    if (!$rel) { $msg = "Ícone de $rot: falha ao salvar. Verifique a permissão da pasta uploads/."; break; }
+                    $novos[] = $rel;
+                    if ($arqAt) $velhos[] = $arqAt;
+                    $plano[$sec] = ($cores ? 'img:' : 'up:') . $rel;
+                } elseif ($esc === 'up' && $arqAt) {                                              // mantém o PNG atual (pode trocar recolorir/cores)
+                    $plano[$sec] = ($cores ? 'img:' : 'up:') . $arqAt;
+                } elseif (strncmp($esc, 'lib:', 4) === 0 && isset(ICONES[substr($esc, 4)])) {    // ícone da biblioteca
+                    $plano[$sec] = $esc;
+                    if ($arqAt) $velhos[] = $arqAt;
+                } else {                                                                          // nenhum
+                    $plano[$sec] = '';
+                    if ($arqAt) $velhos[] = $arqAt;
+                }
+            }
+            if ($msg !== '') {
+                array_map('apagar_imagem', $novos);
+                $erro = $msg;
+            } else {
+                try {
+                    $up = $pdo->prepare("INSERT INTO ajustes (chave, valor) VALUES (?, ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)");
+                    foreach ($plano as $sec => $valor) $up->execute(['icone_' . $sec, $valor]);
+                } catch (PDOException $ex2) {
+                    array_map('apagar_imagem', $novos);
+                    throw $ex2;
+                }
+                array_map('apagar_imagem', $velhos);
+                $ok = 'Ícones atualizados.';
             }
         } elseif (!isset($listas[$lista])) {
             $erro = 'Ação inválida.';
@@ -114,6 +160,8 @@ try {
     $v = $pdo->query("SELECT valor FROM ajustes WHERE chave = 'layout_ingredientes'")->fetchColumn();
     if (is_string($v) && isset($layouts[$v])) $layoutAtual = $v;
 } catch (PDOException $ex) { /* tabela ainda não criada */ }
+
+$icoAtuais = icones_secoes();                                // ícones das seções da receita (Layout)
 
 $svg = fn(string $d) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $svgLapis     = $svg('<path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>');
@@ -295,6 +343,64 @@ require 'includes/header.php';
               </div>
             </fieldset>
             <button type="submit">Salvar layout</button>
+          </form>
+        </section>
+        <!-- Neto: Ícones das seções (ao lado esquerdo de Ingredientes, Utensílios e Modo de preparo) -->
+        <section class="cfg-sub" aria-labelledby="lay-icones">
+          <h4 id="lay-icones" class="cfg-t3">Ícones das seções</h4>
+          <form class="form-cor" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+            <input type="hidden" name="acao" value="icones">
+            <?php foreach (SECOES_ICONE as $sec => $rot):
+                $val = $icoAtuais[$sec];
+                $arq = icone_arquivo($val);
+                $esc = $arq ? 'up' : ($val === '' ? 'none' : $val);     // 'none', 'up' ou 'lib:nome'
+                $nomeAtivo = $esc === 'none' ? 'Sem ícone' : ($esc === 'up' ? (strncmp($val, 'img:', 4) === 0 ? 'Seu PNG (cores originais)' : 'Seu PNG') : (ICONES[substr($esc, 4)][0] ?? 'Sem ícone')); ?>
+              <fieldset class="ico-sec">
+                <legend><?= e($rot) ?></legend>
+
+                <!-- Pré-visualização fixa: mostra o título da seção com o ícone ativo (atualiza ao escolher) -->
+                <div class="ico-topo">
+                  <div class="ico-prev" aria-live="polite">
+                    <span class="ico-prev-i"><?= icone_html($val) ?></span>
+                    <span class="ico-prev-t"><?= e($rot) ?></span>
+                  </div>
+                  <small class="ico-nome"><?= e($nomeAtivo) ?></small>
+                  <button type="button" class="sec ico-abrir" aria-expanded="false" aria-controls="ico-grade-<?= e($sec) ?>">
+                    Escolher ícone
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                </div>
+
+                <!-- Lista de ícones: fica recolhida até clicar em "Escolher ícone" -->
+                <div class="ico-grade" id="ico-grade-<?= e($sec) ?>" hidden>
+                  <label class="ico-op ico-nenhum" title="Sem ícone">
+                    <input type="radio" name="ico_<?= e($sec) ?>" value="none" <?= $esc === 'none' ? 'checked' : '' ?>>
+                    <span>Nenhum</span>
+                  </label>
+                  <?php foreach (ICONES as $nome => [$rotulo, $svgIco]): ?>
+                    <label class="ico-op" title="<?= e($rotulo) ?>">
+                      <input type="radio" name="ico_<?= e($sec) ?>" value="lib:<?= e($nome) ?>" <?= $esc === 'lib:' . $nome ? 'checked' : '' ?>>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="<?= e($rotulo) ?>"><?= $svgIco ?></svg>
+                    </label>
+                  <?php endforeach; ?>
+                  <?php if ($arq): ?>
+                    <label class="ico-op" title="Seu PNG">
+                      <input type="radio" name="ico_<?= e($sec) ?>" value="up" data-png="<?= e('uploads/' . $arq) ?>" <?= $esc === 'up' ? 'checked' : '' ?>>
+                      <?= icone_html('up:' . $arq) ?>
+                    </label>
+                  <?php endif; ?>
+                </div>
+
+                <div class="ico-envio">
+                  <label class="ico-up">Enviar PNG (fundo transparente, até 200 KB)
+                    <input type="file" name="ico_<?= e($sec) ?>_arquivo" accept="image/png">
+                  </label>
+                  <label class="check"><input type="checkbox" name="ico_<?= e($sec) ?>_cores" <?= strncmp($val, 'img:', 4) === 0 ? 'checked' : '' ?>> Manter as cores originais do PNG</label>
+                </div>
+              </fieldset>
+            <?php endforeach; ?>
+            <button type="submit">Salvar ícones</button>
           </form>
         </section>
         <!-- novos netos da Página da receita entram aqui -->

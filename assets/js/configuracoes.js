@@ -43,4 +43,58 @@
       if (r.value !== 'neutro') raiz.classList.add('acc-' + r.value);
     });
   });
+  // ---------- Ícones das seções: lista recolhível e prévia ao vivo (só vale ao salvar) ----------
+  painel.querySelectorAll('.ico-sec').forEach((sec) => {
+    const alvo  = sec.querySelector('.ico-prev-i');
+    const nome  = sec.querySelector('.ico-nome');
+    const grade = sec.querySelector('.ico-grade');
+    const abrir = sec.querySelector('.ico-abrir');
+    const arq   = sec.querySelector('input[type=file]');
+    const cores = sec.querySelector('input[type=checkbox]');
+    let urlNovo = null;                                              // endereço temporário do PNG escolhido no computador
+
+    // PNG: recolorido pelo tema (máscara) ou com as cores originais, conforme a caixa marcada
+    const criarPng = (url) => {
+      if (cores.checked) { const i = new Image(); i.className = 'sec-ico'; i.alt = ''; i.src = url; return i; }
+      const s = document.createElement('span');
+      s.className = 'sec-ico sec-ico-m';
+      s.setAttribute('aria-hidden', 'true');
+      s.style.webkitMaskImage = s.style.maskImage = 'url("' + url + '")';
+      return s;
+    };
+    const atualizar = () => {
+      const marcado = sec.querySelector('input[type=radio]:checked');
+      alvo.replaceChildren();
+      if (arq.files[0]) { alvo.append(criarPng(urlNovo)); nome.textContent = 'PNG novo (ainda não salvo)'; return; }
+      if (!marcado || marcado.value === 'none') { nome.textContent = 'Sem ícone'; return; }
+      if (marcado.value === 'up') { alvo.append(criarPng(marcado.dataset.png)); nome.textContent = cores.checked ? 'Seu PNG (cores originais)' : 'Seu PNG'; return; }
+      const svg = marcado.closest('label').querySelector('svg').cloneNode(true);   // ícone da biblioteca: copia o desenho do botão marcado
+      svg.setAttribute('class', 'sec-ico');
+      svg.removeAttribute('aria-label');
+      svg.setAttribute('aria-hidden', 'true');
+      alvo.append(svg);
+      nome.textContent = marcado.closest('label').title;
+    };
+
+    abrir.addEventListener('click', () => {                          // abre/fecha a lista de ícones
+      grade.hidden = !grade.hidden;
+      abrir.setAttribute('aria-expanded', String(!grade.hidden));
+    });
+    grade.addEventListener('change', () => {                         // escolheu na lista: vale o ícone da lista, a lista recolhe
+      arq.value = '';
+      atualizar();
+      grade.hidden = true;
+      abrir.setAttribute('aria-expanded', 'false');
+    });
+    grade.addEventListener('click', (ev) => {                        // clicar no ícone que já estava marcado também recolhe a lista
+      if (!ev.target.closest('.ico-op')) return;
+      setTimeout(() => { grade.hidden = true; abrir.setAttribute('aria-expanded', 'false'); }, 0);
+    });
+    arq.addEventListener('change', () => {
+      if (urlNovo) { URL.revokeObjectURL(urlNovo); urlNovo = null; }
+      if (arq.files[0]) urlNovo = URL.createObjectURL(arq.files[0]);
+      atualizar();
+    });
+    cores.addEventListener('change', atualizar);
+  });
 })();
