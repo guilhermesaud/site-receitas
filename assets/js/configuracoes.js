@@ -43,14 +43,30 @@
       if (r.value !== 'neutro') raiz.classList.add('acc-' + r.value);
     });
   });
-  // ---------- Ícones das seções: lista recolhível e prévia ao vivo (só vale ao salvar) ----------
-  painel.querySelectorAll('.ico-sec').forEach((sec) => {
-    const alvo  = sec.querySelector('.ico-prev-i');
-    const nome  = sec.querySelector('.ico-nome');
-    const grade = sec.querySelector('.ico-grade');
-    const abrir = sec.querySelector('.ico-abrir');
-    const arq   = sec.querySelector('input[type=file]');
-    const cores = sec.querySelector('input[type=checkbox]');
+  // ---------- Ícones das seções: painel flutuante da lista e prévia ao vivo (só vale ao salvar) ----------
+  const linhasIco = [...painel.querySelectorAll('.ico-linha')];
+  const fecharLinha = (lin) => {
+    lin.querySelector('.ico-grade').hidden = true;
+    lin.querySelector('.ico-abrir').setAttribute('aria-expanded', 'false');
+  };
+  document.addEventListener('click', (ev) => {                       // clicar fora do painel fecha
+    if (!ev.target.closest('.ico-escolha')) linhasIco.forEach(fecharLinha);
+  });
+  document.addEventListener('keydown', (ev) => {                     // Esc fecha e devolve o foco ao botão
+    if (ev.key !== 'Escape') return;
+    const aberta = linhasIco.find((l) => !l.querySelector('.ico-grade').hidden);
+    if (aberta) { fecharLinha(aberta); aberta.querySelector('.ico-abrir').focus(); }
+  });
+
+  linhasIco.forEach((lin) => {
+    const prev  = lin.querySelector('.ico-prev');
+    const alvo  = lin.querySelector('.ico-prev-i');
+    const nome  = lin.querySelector('.ico-nome');
+    const grade = lin.querySelector('.ico-grade');
+    const abrir = lin.querySelector('.ico-abrir');
+    const arq   = lin.querySelector('input[type=file]');
+    const cores = lin.querySelector('input[type=checkbox]');
+    const rotCores = cores.closest('label');
     let urlNovo = null;                                              // endereço temporário do PNG escolhido no computador
 
     // PNG: recolorido pelo tema (máscara) ou com as cores originais, conforme a caixa marcada
@@ -63,32 +79,49 @@
       return s;
     };
     const atualizar = () => {
-      const marcado = sec.querySelector('input[type=radio]:checked');
+      const marcado = lin.querySelector('input[type=radio]:checked');
+      const novo = arq.files[0];                                     // PNG novo escolhido vale mais que a lista
+      const ehPngAtual = !!marcado && marcado.value === 'up';
+      rotCores.hidden = !(novo || ehPngAtual);                       // "Cores originais" só faz sentido com PNG
       alvo.replaceChildren();
-      if (arq.files[0]) { alvo.append(criarPng(urlNovo)); nome.textContent = 'PNG novo (ainda não salvo)'; return; }
-      if (!marcado || marcado.value === 'none') { nome.textContent = 'Sem ícone'; return; }
-      if (marcado.value === 'up') { alvo.append(criarPng(marcado.dataset.png)); nome.textContent = cores.checked ? 'Seu PNG (cores originais)' : 'Seu PNG'; return; }
-      const svg = marcado.closest('label').querySelector('svg').cloneNode(true);   // ícone da biblioteca: copia o desenho do botão marcado
-      svg.setAttribute('class', 'sec-ico');
-      svg.removeAttribute('aria-label');
-      svg.setAttribute('aria-hidden', 'true');
-      alvo.append(svg);
-      nome.textContent = marcado.closest('label').title;
+      let texto = 'Sem ícone';
+      if (novo) {
+        alvo.append(criarPng(urlNovo));
+        texto = 'PNG novo (ainda não salvo)';
+      } else if (ehPngAtual) {
+        alvo.append(criarPng(marcado.dataset.png));
+        texto = cores.checked ? 'Seu PNG (cores originais)' : 'Seu PNG';
+      } else if (marcado && marcado.value !== 'none') {              // ícone da biblioteca: copia o desenho do botão marcado
+        const svg = marcado.closest('label').querySelector('svg').cloneNode(true);
+        svg.setAttribute('class', 'sec-ico');
+        svg.removeAttribute('aria-label');
+        svg.setAttribute('aria-hidden', 'true');
+        alvo.append(svg);
+        texto = marcado.closest('label').title;
+      }
+      nome.textContent = texto;
+      prev.title = texto;
     };
 
-    abrir.addEventListener('click', () => {                          // abre/fecha a lista de ícones
-      grade.hidden = !grade.hidden;
-      abrir.setAttribute('aria-expanded', String(!grade.hidden));
+    abrir.addEventListener('click', () => {                          // abre/fecha o painel (um de cada vez)
+      const abrindo = grade.hidden;
+      linhasIco.forEach(fecharLinha);
+      if (!abrindo) return;
+      grade.hidden = false;
+      abrir.setAttribute('aria-expanded', 'true');
+      grade.style.left = '';                                         // se o painel passar da borda direita da tela, desloca para a esquerda
+      const r = grade.getBoundingClientRect();
+      const limite = document.documentElement.clientWidth - 8;
+      if (r.right > limite) grade.style.left = -Math.min(r.right - limite, Math.max(0, r.left - 8)) + 'px';
     });
-    grade.addEventListener('change', () => {                         // escolheu na lista: vale o ícone da lista, a lista recolhe
+    grade.addEventListener('change', () => {                         // escolheu na lista: vale o ícone da lista, o painel fecha
       arq.value = '';
       atualizar();
-      grade.hidden = true;
-      abrir.setAttribute('aria-expanded', 'false');
+      fecharLinha(lin);
     });
-    grade.addEventListener('click', (ev) => {                        // clicar no ícone que já estava marcado também recolhe a lista
+    grade.addEventListener('click', (ev) => {                        // clicar no ícone que já estava marcado também fecha
       if (!ev.target.closest('.ico-op')) return;
-      setTimeout(() => { grade.hidden = true; abrir.setAttribute('aria-expanded', 'false'); }, 0);
+      setTimeout(() => fecharLinha(lin), 0);
     });
     arq.addEventListener('change', () => {
       if (urlNovo) { URL.revokeObjectURL(urlNovo); urlNovo = null; }
@@ -96,5 +129,12 @@
       atualizar();
     });
     cores.addEventListener('change', atualizar);
+  });
+
+  // ---------- Tamanho dos ícones: as prévias acompanham o número digitado (só vale ao salvar) ----------
+  const campoTam = painel.querySelector('input[name=icone_tamanho]');
+  campoTam?.addEventListener('input', () => {
+    const v = parseInt(campoTam.value, 10);
+    if (v >= +campoTam.min && v <= +campoTam.max) campoTam.closest('form').style.setProperty('--ico-tam', v + 'px');
   });
 })();

@@ -54,9 +54,11 @@ try {
 $grupos = ingredientes_agrupados($r['ingredientes']);
 $ing_simples = count($grupos) <= 1 && ($grupos[0]['titulo'] ?? '') === '';   // sem títulos: lista simples, como antes
 $ico = icones_secoes();                                                       // ícones dos títulos de seção (Configurações > Layout)
+$ih  = [];                                                                    // HTML do ícone de cada seção ('' = sem ícone)
+foreach (SECOES_ICONE as $k => $rot) $ih[$k] = icone_html($ico[$k]);
 require 'includes/header.php';
 ?>
-<article class="receita">
+<article class="receita" style="--ico-tam:<?= (int)$ico['tamanho'] ?>px">
   <?php if (eh_admin()): ?>
     <!-- Ícones no canto superior direito (posição absoluta dentro do article) -->
     <div class="acoes">
@@ -101,8 +103,8 @@ require 'includes/header.php';
 
   <div class="ingr-utens<?= $utens ? '' : ' so-ingr' ?>">
     <section class="ing <?= $ing_simples ? 'ing-simples' : 'ing-' . e($layout_ing) ?>">
-      <h2><?= icone_html($ico['ingredientes']) ?>Ingredientes</h2>
-      <div class="ing-grupos">
+      <h2><?= $ih['ingredientes'] ?>Ingredientes</h2>
+      <div class="ing-grupos<?= $ih['ingredientes'] !== '' ? ' recuo' : '' ?>">
         <?php foreach ($grupos as $g): ?>
           <div class="ing-grupo">
             <?php if ($g['titulo'] !== ''): ?><h3 class="ing-titulo<?= $layout_ing === 'etiqueta' ? ' tag' : '' ?>"><?= e($g['titulo']) ?></h3><?php endif; ?>
@@ -113,14 +115,14 @@ require 'includes/header.php';
     </section>
     <?php if ($utens): ?>   <!-- sem utensílios, a seção e o título não aparecem -->
       <section>
-        <h2><?= icone_html($ico['utensilios']) ?>Utensílios</h2>
-        <ul><?php foreach ($utens as $u): ?><li><?= (int)$u['quantidade'] ?>× <?= e($u['nome']) ?></li><?php endforeach; ?></ul>
+        <h2><?= $ih['utensilios'] ?>Utensílios</h2>
+        <ul<?= $ih['utensilios'] !== '' ? ' class="recuo"' : '' ?>><?php foreach ($utens as $u): ?><li><?= (int)$u['quantidade'] ?>× <?= e($u['nome']) ?></li><?php endforeach; ?></ul>
       </section>
     <?php endif; ?>
   </div>
 
-  <h2><?= icone_html($ico['preparo']) ?>Modo de preparo</h2>
-  <ol>
+  <h2><?= $ih['preparo'] ?>Modo de preparo</h2>
+  <ol<?= $ih['preparo'] !== '' ? ' class="recuo"' : '' ?>>
     <?php foreach ($passos as $p): ?>
       <li><?php if ($p['titulo']): ?><strong class="passo-titulo"><?= e($p['titulo']) ?></strong><?php endif; ?><?= nl2br(e($p['instrucao'])) ?>
         <?php if ($p['imagem']): ?><img class="passo-img" src="uploads/<?= e($p['imagem']) ?>" alt="Imagem do passo" loading="lazy"><?php endif; ?>

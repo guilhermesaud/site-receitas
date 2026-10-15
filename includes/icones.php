@@ -12,6 +12,11 @@ require_once __DIR__ . '/config.php';
 /** Seções que aceitam ícone: chave => título. */
 const SECOES_ICONE = ['ingredientes' => 'Ingredientes', 'utensilios' => 'Utensílios', 'preparo' => 'Modo de preparo'];
 
+/** Tamanho dos ícones (px; um só número vale para largura e altura e para as 3 seções). */
+const ICONE_TAM_MIN = 12;
+const ICONE_TAM_MAX = 64;
+const ICONE_TAM_PADRAO = 28;
+
 /** Biblioteca de ícones: nome => [rótulo, conteúdo do <svg> (viewBox 24x24, traço 2)]. */
 const ICONES = [
     'chef-hat'       => ['Chapéu de chef',   '<path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"/><path d="M6 17h12"/>'],
@@ -32,16 +37,23 @@ const ICONES = [
     'heart'          => ['Coração',          '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>'],
 ];
 
-/** Valores gravados dos ícones: [seção => valor]. Sem a tabela ajustes (ou sem valor), a seção fica sem ícone. */
+/** Valores gravados: [seção => valor do ícone, ..., 'tamanho' => px]. Sem a tabela ajustes (ou sem valor): sem ícone e tamanho padrão. */
 function icones_secoes(): array {
     $r = array_fill_keys(array_keys(SECOES_ICONE), '');
+    $r['tamanho'] = ICONE_TAM_PADRAO;
     try {
-        $chaves = array_map(fn($s) => 'icone_' . $s, array_keys(SECOES_ICONE));
+        $chaves = array_map(fn($s) => 'icone_' . $s, array_keys($r));
         $st = db()->prepare('SELECT chave, valor FROM ajustes WHERE chave IN (' . implode(',', array_fill(0, count($chaves), '?')) . ')');
         $st->execute($chaves);
         foreach ($st->fetchAll(PDO::FETCH_KEY_PAIR) as $chave => $valor) {
             $sec = substr($chave, 6);                               // tira o prefixo "icone_"
-            if (isset($r[$sec])) $r[$sec] = (string)$valor;
+            if (!array_key_exists($sec, $r)) continue;
+            if ($sec === 'tamanho') {
+                $t = (int)$valor;
+                $r[$sec] = ($t >= ICONE_TAM_MIN && $t <= ICONE_TAM_MAX) ? $t : ICONE_TAM_PADRAO;
+            } else {
+                $r[$sec] = (string)$valor;
+            }
         }
     } catch (PDOException $ex) { /* tabela ainda não criada: sem ícones */ }
     return $r;
