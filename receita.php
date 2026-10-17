@@ -122,12 +122,20 @@ require 'includes/header.php';
   </div>
 
   <h2><?= $ih['preparo'] ?>Modo de preparo</h2>
-  <ol<?= $ih['preparo'] !== '' ? ' class="recuo"' : '' ?>>
-    <?php foreach ($passos as $p): ?>
-      <li><?php if ($p['titulo']): ?><strong class="passo-titulo"><?= e($p['titulo']) ?></strong><?php endif; ?><?= nl2br(e($p['instrucao'])) ?>
-        <?php if ($p['imagem']): ?><img class="passo-img" src="uploads/<?= e($p['imagem']) ?>" alt="Imagem do passo" loading="lazy"><?php endif; ?>
+  <!-- Modo de preparo em linha do tempo: número em círculo, título, texto e foto de tamanho padrão (clique amplia) -->
+  <ol class="passos-tl<?= $ih['preparo'] !== '' ? ' recuo' : '' ?>">
+    <?php foreach ($passos as $n => $p): ?>
+      <li<?= $p['titulo'] ? '' : ' class="sem-titulo"' ?>>
+        <?php if ($p['titulo']): ?><strong class="passo-titulo"><?= e($p['titulo']) ?></strong><?php endif; ?>
+        <span class="passo-texto"><?= nl2br(e($p['instrucao'])) ?></span>
+        <?php if ($p['imagem']): ?>
+          <a class="passo-foto" href="uploads/<?= e($p['imagem']) ?>" data-ampliar aria-label="Ampliar a foto do passo <?= $n + 1 ?>">
+            <img class="passo-img" src="uploads/<?= e($p['imagem']) ?>" alt="Foto do passo <?= $n + 1 ?>" loading="lazy">
+          </a>
+        <?php endif; ?>
       </li>
     <?php endforeach; ?>
   </ol>
 </article>
+<script src="assets/js/receita.js?v=<?= (int)@filemtime(__DIR__ . '/assets/js/receita.js') ?>" defer></script>
 <?php require 'includes/footer.php'; ?>

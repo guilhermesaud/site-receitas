@@ -91,7 +91,6 @@ legend{font-weight:600;margin-bottom:.6rem}
 .rm{padding:.25rem .7rem;font-size:.85rem}
 .mini{max-width:180px;border-radius:var(--r)}
 small{color:var(--mut)}
-.passo-img{display:block;max-width:100%;border-radius:var(--r);margin:.6rem 0 .8rem}
 
 /* ===== Ícone de tema: lua no claro, sol no escuro ===== */
 .icon-btn{display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%}
@@ -240,7 +239,6 @@ main{flex:1}
 /* ===== Receita: títulos maiores e imagens com limite de tamanho ===== */
 .receita{--h2-rec:clamp(1.4rem,4vw,1.85rem)}                       /* tamanho dos títulos de seção; os grupos de ingredientes ficam sempre menores */
 .receita h2{font-size:var(--h2-rec);margin:1.6rem 0 .6rem}
-.passo-img{display:block;width:auto;max-width:100%;height:auto;max-height:250px;object-fit:contain;border-radius:var(--r);margin:.6rem 0 .8rem}
 
 /* ===== Áreas de imagem clicáveis (capa e passos) ===== */
 .upload{position:relative;flex:none}
@@ -531,3 +529,27 @@ h1,h2,.card h2,.receita h1{overflow-wrap:anywhere;word-break:break-word;max-widt
 .ico-tam-campo label{font-weight:600}
 .ico-tam-campo input{width:5.5rem}
 .ico-prev-t{font-size:1.85rem}
+
+/* ===== Modo de preparo: linha do tempo ===== */
+.receita .passos-tl{list-style:none;padding:0;margin-top:0;margin-bottom:0;counter-reset:p}   /* margin-left fica livre para o .recuo (ícone na seção) */
+.receita .passos-tl > li{counter-increment:p;position:relative;max-width:none;margin:0;padding:0 0 1.4rem 2.7rem}
+.receita .passos-tl > li:last-child{padding-bottom:0}
+.passos-tl > li::before{content:counter(p);position:absolute;left:0;top:0;display:grid;place-items:center;width:1.8rem;height:1.8rem;border-radius:50%;background:var(--pri);color:var(--on-pri);font-size:.85rem;font-weight:700}   /* número em círculo, na cor de destaque */
+.passos-tl > li:not(:last-child)::after{content:"";position:absolute;left:calc(.9rem - 1px);top:2.1rem;bottom:.3rem;width:2px;background:var(--bd)}   /* linha ligando os passos */
+.passos-tl .passo-titulo{display:block;margin:0;font-family:var(--serif);font-weight:400;font-size:1.2rem;line-height:1.8rem}
+.passos-tl .passo-texto{display:block;max-width:70ch}
+.passos-tl > li.sem-titulo .passo-texto{padding-top:.2rem}                  /* sem título: a 1ª linha alinha com o círculo */
+/* Foto do passo: SEMPRE do mesmo tamanho (16:9, até 400px de largura), recortada se a proporção for outra */
+.passo-foto{display:block;width:min(100%,var(--passo-foto,400px));margin-top:.7rem;overflow:hidden;border-radius:var(--r-img);line-height:0;cursor:zoom-in}
+.passo-foto:focus-visible{outline:2px solid var(--pri);outline-offset:3px}
+.passo-foto .passo-img{display:block;width:100%;aspect-ratio:16/9;height:auto;object-fit:cover;transition:filter .15s ease}
+.passo-foto:hover .passo-img{filter:brightness(1.08)}
+
+/* ===== Foto ampliada (clique na foto do passo) ===== */
+.lightbox{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:1rem;background:rgba(0,0,0,.88);cursor:zoom-out}
+.lightbox[hidden]{display:none}
+.lightbox-img{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:var(--r-img)}
+.lightbox-fechar{position:fixed;top:1rem;right:1rem;display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff}
+.lightbox-fechar:hover{background:rgba(255,255,255,.26)}
+.lightbox-fechar svg{width:20px;height:20px}
+@media (prefers-reduced-motion:reduce){.passo-foto .passo-img{transition:none}}
